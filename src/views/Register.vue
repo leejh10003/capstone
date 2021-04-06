@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <form @submit.prevent="register">
+    <form @submit.prevent="register" v-if="!confirm">
       <h2>Register</h2>
       <input
         type="email"
@@ -14,6 +14,13 @@
       />
       <button>Register</button>
     </form>
+    <form @submit.prevent="confirmAmplify" v-if="confirm">
+      <input
+        v-model="confirmationCode"
+        placeholder="confirmation code..."
+      />
+      <button>confirm</button>
+    </form>
   </div>
 </template>
 <script>
@@ -23,16 +30,23 @@ export default {
     return {
       email: '',
       password: '',
+      confirm: false,
+      confirmationCode: null,
+      username: null,
     }
   },
   methods: {
+    async confirmAmplify(){
+      await Auth.confirmSignUp(this.username, this.confirmationCode);
+    },
     async register() {
       try {
-        await Auth.signUp({
+        const authResult = await Auth.signUp({
           username: this.email,
           password: this.password,
         });
-        alert('User successfully registered. Please login');
+        this.username = authResult.user.getUsername()
+        this.confirm = true
       } catch (error) {
         alert(error.message);
       }
