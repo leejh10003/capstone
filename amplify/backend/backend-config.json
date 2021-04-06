@@ -1,0 +1,10 @@
+{
+  "auth": {
+    "capstone4bb969ac": {
+      "service": "Cognito",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [],
+      "customAuth": false
+    }
+  }
+}
