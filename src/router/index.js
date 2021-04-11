@@ -28,6 +28,16 @@ const routes = [
     name: 'Login',
     component: () => import(/* webpackChunkName: "login" */ '../views/Login.vue'),
   },
+  {
+    path: '/drop',
+    name: 'Drop',
+    component: () => import(/* webpackChunkName: "login" */ '../views/Drop.vue'),
+  },
+  {
+    path: '/gpu',
+    name: 'GPU',
+    component: () => import(/* webpackChunkName: "login" */ '../views/GPU.vue'),
+  }
 ]
 
 const router = new VueRouter({

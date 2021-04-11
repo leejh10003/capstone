@@ -4,7 +4,9 @@
       <router-link to="/">Home</router-link> |
       <router-link to="/about">About</router-link> |
       <router-link to="/register">Register</router-link> |
-      <router-link to="/login">Login</router-link>  |
+      <router-link to="/drop">Drop</router-link> |
+      <router-link to="/login">Login</router-link> |
+      <router-link to="/gpu">GPU</router-link> |
       <button @click="logout">Logout</button>
     </div>
     <router-view/>
