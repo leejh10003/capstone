@@ -5,7 +5,7 @@
       <video src="../assets/jellyfish.webm" controls width="337" height="599" loop autoplay style="display: inline"/>
     </div>
     <div id="canvas-parent" class="grid-item" style="display: inline">
-      <span style="display: inline">GPU.js Graphical Output <span id="fps-number">0</span><span> fps</span></span>
+      <span style="display: inline">GPU.js Graphical Output <span id="fps-number">0</span><span> fps</span></span><br/>
     </div>
     <div>
       <label><input type="checkbox" id="parsegpu" v-model="pauseGPU">Pause rendering</label>
