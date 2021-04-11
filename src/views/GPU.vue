@@ -2,7 +2,7 @@
   <div class="grid-container">
     <div class="grid-item">
       <span style="display: inline">Original video</span><br/>
-      <video src="../assets/jellyfish.webm" controls width="337" height="599" loop autoplay style="display: inline"/>
+      <video src="../assets/jellyfish.mp4" controls width="337" height="599" loop autoplay style="display: inline"/>
     </div>
     <div id="canvas-parent" class="grid-item" style="display: inline">
       <span style="display: inline">GPU.js Graphical Output <span id="fps-number">0</span><span> fps</span></span><br/>
