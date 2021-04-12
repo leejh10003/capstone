@@ -7,6 +7,7 @@
       <router-link to="/drop">Drop</router-link> |
       <router-link to="/login">Login</router-link> |
       <router-link to="/gpu">GPU</router-link> |
+      <router-link to="/graphql">GraphQL</router-link> |
       <button @click="logout">Logout</button>
     </div>
     <router-view/>

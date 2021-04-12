@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@apollo/client@^3.1.5":
+"@apollo/client@^3.0.0-beta.23", "@apollo/client@^3.1.5":
   version "3.3.14"
   resolved "https://registry.yarnpkg.com/@apollo/client/-/client-3.3.14.tgz#b077f42e17941dbf4c62c4f41bf83c0828872d09"
   integrity sha512-z7YwMvF9grmpWUG+26e3gPcBAOA/r/Ci5gwK7JVm3bGYG9kKqG8MF6sMXEbuwTsFseE4duSp0icJ6tdzxJhhlA==
@@ -30,6 +30,14 @@
     apollo-server-env "^2.4.5"
     core-js "^3.4.0"
     lodash.xorby "^4.7.0"
+
+"@apollo/link-context@^2.0.0-beta.3":
+  version "2.0.0-beta.3"
+  resolved "https://registry.yarnpkg.com/@apollo/link-context/-/link-context-2.0.0-beta.3.tgz#0da6cec0cf63ccc180c27bdfb77990c19f4ebab6"
+  integrity sha512-oqdPayK9opMB80U+/vFiEwoSjtGLchys2vSysaCOE93LdotwQlmO0W0G2INN+tAgUfb+JEAj7rBwlBoXrHOy8A==
+  dependencies:
+    "@apollo/client" "^3.0.0-beta.23"
+    tslib "^1.9.3"
 
 "@apollo/protobufjs@^1.0.3":
   version "1.0.5"

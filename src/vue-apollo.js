@@ -40,7 +40,7 @@ const defaultOptions = {
   getAuth: async () => {
     try {
       const applyToken = (await Auth.currentSession()).getIdToken()
-      return `Bearer ${applyToken}`
+      return `Bearer ${applyToken.jwtToken}`
     } catch (e) {
       /*await request({
         url: '/jwt/crm/logout',
@@ -66,7 +66,15 @@ export function createProvider (options = {}) {
     ...defaultOptions,
     ...options,
   })
+  wsClient.connectionParams = async () => {
+    return {
+      headers: {
+        Authorization: `Bearer ${(await Auth.currentSession()).getIdToken().jwtToken}`
+      }
+    }
+  }
   apolloClient.wsClient = wsClient
+  
 
   // Create vue apollo provider
   const apolloProvider = new VueApollo({
@@ -86,10 +94,7 @@ export function createProvider (options = {}) {
 }
 
 // Manually call this when user log in
-export async function onLogin (apolloClient, token) {
-  if (typeof localStorage !== 'undefined' && token) {
-    localStorage.setItem(AUTH_TOKEN, token)
-  }
+export async function onLogin (apolloClient) {
   if (apolloClient.wsClient) restartWebsockets(apolloClient.wsClient)
   try {
     await apolloClient.resetStore()

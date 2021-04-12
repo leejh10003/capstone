@@ -37,6 +37,11 @@ const routes = [
     path: '/gpu',
     name: 'GPU',
     component: () => import(/* webpackChunkName: "login" */ '../views/GPU.vue'),
+  },
+  {
+    path: '/graphql',
+    name: 'GraphQL',
+    component: () => import(/* webpackChunkName: "login" */ '../views/GraphQL.vue'),
   }
 ]
 
