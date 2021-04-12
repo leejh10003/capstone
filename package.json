@@ -12,6 +12,7 @@
     "core-js": "^3.6.5",
     "gpu.js": "^2.11.2",
     "vue": "^2.6.11",
+    "vue-apollo": "^3.0.0-beta.11",
     "vue-router": "^3.5.1",
     "vue2-dropzone": "^3.6.0"
   },
@@ -23,6 +24,8 @@
     "babel-eslint": "^10.1.0",
     "eslint": "^6.7.2",
     "eslint-plugin-vue": "^6.2.2",
+    "graphql-tag": "^2.9.0",
+    "vue-cli-plugin-apollo": "~0.22.2",
     "vue-template-compiler": "^2.6.11"
   },
   "eslintConfig": {
