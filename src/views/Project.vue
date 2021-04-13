@@ -6,10 +6,16 @@
 <script>
 import gql from 'graphql-tag'
 export default {
+  
   apollo: {
     projects: {
-      query: gql`query projects{
-        projects {
+      variables: function (){
+        return {
+          project_id: this.$route.params.id
+        }
+      },
+      query: gql`query projects($project_id: bigint!){
+        projects(where: {id : {_eq: $project_id}}) {
           id
           videos {
             exif
@@ -36,11 +42,14 @@ export default {
         }
       }
       `,
-      fetchPolicy: 'network-only',
       subscribeToMore: {
-        fetchPolicy: 'network-only',
-        document: gql`subscription projectsSubscription {
-          projects {
+        variables: function (){
+          return {
+            project_id: this.$route.params.id
+          }
+        },
+        document: gql`subscription projectsSubscription($project_id: bigint!) {
+          projects(where: {id : {_eq: $project_id}}) {
             id
             videos {
               exif
