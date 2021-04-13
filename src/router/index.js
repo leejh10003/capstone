@@ -39,9 +39,9 @@ const routes = [
     component: () => import(/* webpackChunkName: "login" */ '../views/GPU.vue'),
   },
   {
-    path: '/graphql',
-    name: 'GraphQL',
-    component: () => import(/* webpackChunkName: "login" */ '../views/GraphQL.vue'),
+    path: '/project/:id(\\d+)',
+    name: 'Project',
+    component: () => import(/* webpackChunkName: "login" */ '../views/Project.vue'),
   }
 ]
 
