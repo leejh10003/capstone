@@ -37,7 +37,11 @@ export default {
       lastCalledTime: Date.now(),
       flipXY: false,
       alterColors: false,
+      destroy: false,
     }
+  },
+  beforeDestroy: function (){
+    this.disposed = true
   },
   mounted: function (){
     this.kernel = this.gpu.createKernel(function(frame, flipXY, alterColors) {
