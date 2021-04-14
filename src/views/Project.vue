@@ -28,9 +28,9 @@ export default {
             clips {
               current_editor
               id
-              track_offset_frame
-              video_offset_frame
-              played_frame
+              track_offset_time
+              video_offset_time
+              played_time
               video{
                 exif
                 filename
@@ -62,9 +62,9 @@ export default {
               clips {
                 current_editor
                 id
-                track_offset_frame
-                video_offset_frame
-                played_frame
+                track_offset_time
+                video_offset_time
+                played_time
                 video{
                   exif
                   filename
