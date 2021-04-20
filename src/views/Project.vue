@@ -1,12 +1,25 @@
 <template>
   <div>
     {{ projects }}
+    <button @click="insertProject">click</button>
   </div>
 </template>
 <script>
 import gql from 'graphql-tag'
 export default {
-  
+  methods: {
+    insertProject: async function (){
+      await this.$apollo.mutate({
+        mutation: gql`mutation {
+          insert_videos(objects: {project_id: 11, size: 0, filename: "", exif: ""}) {
+            returning{
+              id
+            }
+          }
+        }`
+      })
+    }
+  },
   apollo: {
     projects: {
       variables: function (){
