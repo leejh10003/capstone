@@ -2396,6 +2396,54 @@
     lodash "^4.17.19"
     to-fast-properties "^2.0.0"
 
+"@daybrush/drag@^0.4.2":
+  version "0.4.2"
+  resolved "https://registry.yarnpkg.com/@daybrush/drag/-/drag-0.4.2.tgz#ecfb721ee079f61d77d2d2711ff267f220c4007a"
+  integrity sha512-tc/LEkJxNLDFD17OhNr1SKRQRYAqUUL+HoHVbYizvUHokfT+8doP4c+Z1RMkY7e/hU/uLW24LI32/sV3cXU8+A==
+  dependencies:
+    "@daybrush/utils" "^0.7.0"
+
+"@daybrush/utils@^0.10.0":
+  version "0.10.5"
+  resolved "https://registry.yarnpkg.com/@daybrush/utils/-/utils-0.10.5.tgz#96427101f5de99ceb13bce1f09916374e62c84f1"
+  integrity sha512-VCPbgJgImkUmGHX33drZJh/5FYBhfSM+EFqlBY7fzKIahBGEemjYfninVSp9BdzqF9P2MyCh7R3hgxmySXLEzg==
+
+"@daybrush/utils@^0.7.0", "@daybrush/utils@^0.7.1":
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/@daybrush/utils/-/utils-0.7.1.tgz#be259ce794d7bdda6195b24da1e9666bd845d25f"
+  integrity sha512-n4timHtzzOS9w6fQJ0SfynfNFNqqJeSoXoeFw2CS1PPD3GfWJZliSklFWMBJ5taDcNovyCWlZV7D4bdeGY0nPA==
+
+"@daybrush/utils@^1.0.0", "@daybrush/utils@^1.1.1", "@daybrush/utils@^1.3.1":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@daybrush/utils/-/utils-1.4.0.tgz#c42ea6e65c044b8854d3456531deb226f2db7a56"
+  integrity sha512-P+l76QjGFwu8IbrFoIHO1equrL02h6wYJLRZ37Snr6o3bPEwPS0mdJqyTZipHMhrWoR44UVtZTUi41GPCDc9PQ==
+
+"@egjs/agent@^2.2.1":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@egjs/agent/-/agent-2.3.0.tgz#5a18150ce46a2ba1d237a847db44b0a234bd96f0"
+  integrity sha512-ENhwkOW6rnYW8IuXJwvECIAzj7nMxq+ctB8uCJ+mKnoKK8tGiv3YXtN6nuaOov2YmXdRdwafSz9rhgRNXswX/A==
+
+"@egjs/axes@^2.5.13":
+  version "2.8.0"
+  resolved "https://registry.yarnpkg.com/@egjs/axes/-/axes-2.8.0.tgz#b038378ad0a085b3b4a5218dd8e7db396898212c"
+  integrity sha512-WPMIM/ExZBS8guD3oeNr6YGDn2xSnj0YUZHWvY/NWvTQIs7A2O7WxJivYgzcg7r2q0RYtzrdpHn+982iaKCLSw==
+  dependencies:
+    "@egjs/agent" "^2.2.1"
+    "@egjs/component" "^2.2.2"
+    "@egjs/hammerjs" "^2.0.15"
+
+"@egjs/component@^2.1.2", "@egjs/component@^2.2.2":
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/@egjs/component/-/component-2.2.2.tgz#b8208ea4ca05f6562a51d58f1e6f9979aad8a9d9"
+  integrity sha512-2m6nu6/Mbs6VnoT4IHFGUBX6V82Zp01zDmlWpIJ3fMatHpe7BB1qUYFgMmSWGY0uOvOl4plvflwbCRUAGMfwWQ==
+
+"@egjs/hammerjs@^2.0.15":
+  version "2.0.17"
+  resolved "https://registry.yarnpkg.com/@egjs/hammerjs/-/hammerjs-2.0.17.tgz#5dc02af75a6a06e4c2db0202cae38c9263895124"
+  integrity sha512-XQsZgjm2EcVUiZQf11UBJQfmZeEmOW8DpI1gsFeln6w0ae0ii4dMQEQ0kjl6DspdWX1aGY1/loyXnP0JS06e/A==
+  dependencies:
+    "@types/hammerjs" "^2.0.36"
+
 "@endemolshinegroup/cosmiconfig-typescript-loader@^1.0.0":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@endemolshinegroup/cosmiconfig-typescript-loader/-/cosmiconfig-typescript-loader-1.0.2.tgz#c1eadbb4c269f7898195ca8f7428bf5f5d1c449a"
@@ -2987,6 +3035,36 @@
   dependencies:
     any-observable "^0.3.0"
 
+"@scena/event-emitter@^1.0.3":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@scena/event-emitter/-/event-emitter-1.0.5.tgz#047e3acef93cf238d7ce3a8cc5a12ec6bd9c3bb1"
+  integrity sha512-AzY4OTb0+7ynefmWFQ6hxDdk0CySAq/D4efljfhtRHCOP7MBF9zUfhKG3TJiroVjASqVgkRJFdenS8ArZo6Olg==
+  dependencies:
+    "@daybrush/utils" "^1.1.1"
+
+"@scenejs/effects@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@scenejs/effects/-/effects-1.0.1.tgz#7dca40be7b16e7ba5886047c96cfc519e8812def"
+  integrity sha512-WXZ2RTNOVZ/Z9o2d414cE3FkETNbnkhsL0c3MAiSe+sqvWfqItTmNKZZUekk7F8SOnx1zf+OnFLkHpDo60a6MA==
+  dependencies:
+    "@daybrush/utils" "^0.10.0"
+    keyframer "^0.1.0"
+    scenejs "^1.1.0"
+
+"@scenejs/timeline@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@scenejs/timeline/-/timeline-0.2.1.tgz#8fd77f6867a55128087d41d5e6d59fcc8d77246a"
+  integrity sha512-p5ONF+Z3WKW/ydndHMHAr5ZEcrjrqh2CO6/98dsRE2F3/w/tPSHjkm5EUbwfQmp+ewlt06a7Yh6+fTwoxGFaBw==
+  dependencies:
+    "@daybrush/drag" "^0.4.2"
+    "@daybrush/utils" "^0.10.0"
+    "@egjs/axes" "^2.5.13"
+    "@egjs/component" "^2.1.2"
+    keycon "^0.2.2"
+    preact "^8.4.2"
+    preact-timeline "^0.2.2"
+    scenejs "^1.0.0"
+
 "@sindresorhus/is@^0.14.0":
   version "0.14.0"
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-0.14.0.tgz#9fb3a3cf3132328151f353de4632e01e52102bea"
@@ -3138,6 +3216,11 @@
   dependencies:
     "@types/minimatch" "*"
     "@types/node" "*"
+
+"@types/hammerjs@^2.0.36":
+  version "2.0.39"
+  resolved "https://registry.yarnpkg.com/@types/hammerjs/-/hammerjs-2.0.39.tgz#4be64bbacf3813c79c0dab895c6b0fdc7d5e513f"
+  integrity sha512-lYR2Y/tV2ujpk/WyUc7S0VLI0a9hrtVIN9EwnrNo5oSEJI2cK2/XrgwOQmXLL3eTulOESvh9qP6si9+DWM9cOA==
 
 "@types/http-assert@*":
   version "1.5.1"
@@ -6029,6 +6112,14 @@ css-select@^2.0.0, css-select@^2.0.2:
     css-what "^3.2.1"
     domutils "^1.7.0"
     nth-check "^1.0.2"
+
+css-styled@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/css-styled/-/css-styled-1.0.0.tgz#6fe10a98f95c24fa66cb1c41e11e7c00bcedac13"
+  integrity sha512-lDdPvM2/djv+La110zVY3RGQ7X4OOlzLS+IEjRcn8UlUmJd1+GNcGfDFmsKWwnLBupsY1w0QM1gRgV4RdcCjfw==
+  dependencies:
+    "@daybrush/utils" "^1.0.0"
+    string-hash "^1.1.3"
 
 css-tree@1.0.0-alpha.37:
   version "1.0.0-alpha.37"
@@ -9116,6 +9207,28 @@ just-extend@^4.0.2:
   resolved "https://registry.yarnpkg.com/just-extend/-/just-extend-4.2.1.tgz#ef5e589afb61e5d66b24eca749409a8939a8c744"
   integrity sha512-g3UB796vUFIY90VIv/WX3L2c8CS2MdWUww3CNrYmqza1Fg0DURc2K/O4YrnklBdQarSJ/y8JnJYDGc+1iumQjg==
 
+keycode@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/keycode/-/keycode-2.2.0.tgz#3d0af56dc7b8b8e5cba8d0a97f107204eec22b04"
+  integrity sha1-PQr1bce4uOXLqNCpfxByBO7CKwQ=
+
+keycon@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/keycon/-/keycon-0.2.2.tgz#915cde4b06b44d4b84ce4229102023aa67e80fea"
+  integrity sha512-Gs3nry6sL0ZWOUDip+Ba0wIi/5JBOkXM5XacCauxDt6+C100qgzNRUNFdJUlvihwl2dTaWx2yRnTfQxf3ZSNbQ==
+  dependencies:
+    "@daybrush/utils" "^0.7.1"
+    "@egjs/component" "^2.1.2"
+    keycode "^2.2.0"
+
+keyframer@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/keyframer/-/keyframer-0.1.0.tgz#321cd4acdc767ef910f63a7fa9838d5890198700"
+  integrity sha512-PelLYEv7cVOIoTmKTifOr+QBa8b81ah8IMnJ+XGRGqIHNGXQTVq+7TnCQz9LyKatkGWA4hkO5Icrt9bBP+UmUA==
+  dependencies:
+    "@daybrush/utils" "^0.7.1"
+    scenejs "^1.0.0"
+
 keyv@^3.0.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/keyv/-/keyv-3.1.0.tgz#ecc228486f69991e49e9476485a5be1e8fc5c4d9"
@@ -10323,6 +10436,13 @@ ora@^3.4.0:
     strip-ansi "^5.2.0"
     wcwidth "^1.0.1"
 
+order-map@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/order-map/-/order-map-0.2.2.tgz#dcdfd6f81e7eef61ba79c52cfb960be5166ddd9f"
+  integrity sha512-X//Db/lT11tdxxutWQfE+bmbTyieDJWrr/vSiwBwOf8RRw9yAgF7gqn1ihFmfX2E7l7gcPcucep3aWFjo5FpoA==
+  dependencies:
+    "@daybrush/utils" "^1.0.0"
+
 original@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/original/-/original-1.0.2.tgz#e442a61cffe1c5fd20a65f3261c26663b303f25f"
@@ -11060,6 +11180,22 @@ postcss@^7.0.0, postcss@^7.0.1, postcss@^7.0.14, postcss@^7.0.27, postcss@^7.0.3
     source-map "^0.6.1"
     supports-color "^6.1.0"
 
+preact-timeline@^0.2.2:
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/preact-timeline/-/preact-timeline-0.2.3.tgz#dddcf8e48cf7e404a6220ba63c77a5dcc24c1545"
+  integrity sha512-YLOS2apu8M73Ilzq8Ig8FlAHkuka+/DE7qrF89R6jF6Z+0mRsnivUk5Ij4pb4glzYSjVcJscZZYgYXG5tcW34Q==
+  dependencies:
+    "@daybrush/drag" "^0.4.2"
+    "@daybrush/utils" "^0.10.0"
+    "@egjs/axes" "^2.5.13"
+    keycon "^0.2.2"
+    scenejs "^1.0.0"
+
+preact@^8.4.2:
+  version "8.5.3"
+  resolved "https://registry.yarnpkg.com/preact/-/preact-8.5.3.tgz#78c2a5562fcecb1fed1d0055fa4ac1e27bde17c1"
+  integrity sha512-O3kKP+1YdgqHOFsZF2a9JVdtqD+RPzCQc3rP+Ualf7V6rmRDchZ9MJbiGTT7LuyqFKZqlHSOyO/oMFmI2lVTsw==
+
 prebuild-install@^5.3.5:
   version "5.3.6"
   resolved "https://registry.yarnpkg.com/prebuild-install/-/prebuild-install-5.3.6.tgz#7c225568d864c71d89d07f8796042733a3f54291"
@@ -11793,6 +11929,16 @@ sax@~1.2.4:
   resolved "https://registry.yarnpkg.com/sax/-/sax-1.2.4.tgz#2816234e2378bddc4e5354fab5caa895df7100d9"
   integrity sha512-NqVDv9TpANUjFm0N8uM5GxL36UgKi9/atZw+x7YFnQ8ckwFGKrl4xX4yWtrey3UJm5nP1kUbnYgLopqWNSRhWw==
 
+scenejs@^1.0.0, scenejs@^1.0.1, scenejs@^1.1.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/scenejs/-/scenejs-1.5.0.tgz#326aa5b7db7d5829854d23f44be9445e694ffd04"
+  integrity sha512-Xo6LjUsaVcTbC+FGMMwUH1jthAQUj6bq2i55iEBBifrBn/nzm/++dGo8tqjCzMbm6KUPOpiry38N7r9QY2mWpQ==
+  dependencies:
+    "@daybrush/utils" "^1.3.1"
+    "@scena/event-emitter" "^1.0.3"
+    css-styled "^1.0.0"
+    order-map "^0.2.2"
+
 schema-utils@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/schema-utils/-/schema-utils-1.0.0.tgz#0b79a93204d7b600d4b2850d1f66c2a34951c770"
@@ -12370,6 +12516,11 @@ strict-uri-encode@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/strict-uri-encode/-/strict-uri-encode-2.0.0.tgz#b9c7330c7042862f6b142dc274bbcc5866ce3546"
   integrity sha1-ucczDHBChi9rFC3CdLvMWGbONUY=
+
+string-hash@^1.1.3:
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/string-hash/-/string-hash-1.1.3.tgz#e8aafc0ac1855b4666929ed7dd1275df5d6c811b"
+  integrity sha1-6Kr8CsGFW0Zmkp7X3RJ1311sgRs=
 
 string-width@^1.0.1:
   version "1.0.2"
@@ -13340,6 +13491,18 @@ verror@1.10.0:
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
 
+video-editing-timeline-vue@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/video-editing-timeline-vue/-/video-editing-timeline-vue-1.0.0.tgz#1a1b7921afa333f6af43956144bb9e2956206b00"
+  integrity sha512-lVHEJu16iJaq69L2HlczC3bBctdMzmaCehkzmGh421fGgDKkTbcX+iPloV9xiqgGC2lnHld18xsJoWV0BrvJ7Q==
+  dependencies:
+    video-editing-timeline "^1.0.0"
+
+video-editing-timeline@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/video-editing-timeline/-/video-editing-timeline-1.0.0.tgz#f5bafc5e2de6539d2bc7a5135bbaa378e8a99f53"
+  integrity sha512-X5WN8AxFkczNc8+rgIl3iav8t6DNJhYZsCGl1llYoXGb3xE7vjAW2Jozvz/KFBlsgIoVYq58pGeWGH3yVyfc0Q==
+
 vm-browserify@^1.0.1:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/vm-browserify/-/vm-browserify-1.1.2.tgz#78641c488b8e6ca91a75f511e7a3b32a86e5dda0"
@@ -13390,6 +13553,11 @@ vue-apollo@^3.0.0-beta.11:
     serialize-javascript "^4.0.0"
     throttle-debounce "^2.1.0"
 
+vue-class-component@^7.1.0:
+  version "7.2.6"
+  resolved "https://registry.yarnpkg.com/vue-class-component/-/vue-class-component-7.2.6.tgz#8471e037b8e4762f5a464686e19e5afc708502e4"
+  integrity sha512-+eaQXVrAm/LldalI272PpDe3+i4mPis0ORiMYxF6Ae4hyuCh15W8Idet7wPUEs4N4YptgFHGys4UrgNQOMyO6w==
+
 vue-cli-plugin-apollo@~0.22.2:
   version "0.22.2"
   resolved "https://registry.yarnpkg.com/vue-cli-plugin-apollo/-/vue-cli-plugin-apollo-0.22.2.tgz#e092b83d03bcde082a95416806d3d9ec8dbd8191"
@@ -13422,6 +13590,11 @@ vue-cli-plugin-apollo@~0.22.2:
     nodemon "^2.0.4"
     subscriptions-transport-ws "^0.9.16"
     ts-node "^8.10.2"
+
+vue-draggable-resizable@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/vue-draggable-resizable/-/vue-draggable-resizable-2.3.0.tgz#94c433ca748bc1a4d0959ba1c5c0e1c3536cee5b"
+  integrity sha512-77CLRj1TPwB30pwsjOf3pkd1UzYanCdKXbqhILJ0Oo5QQl50lvBfyQCXxMFzwWwTc3sbBbQH3FfWSV+BkoSElA==
 
 vue-eslint-parser@^7.0.0:
   version "7.6.0"
@@ -13460,10 +13633,25 @@ vue-loader@^15.9.2:
     vue-hot-reload-api "^2.3.0"
     vue-style-loader "^4.1.0"
 
+vue-property-decorator@^8.0.0:
+  version "8.5.1"
+  resolved "https://registry.yarnpkg.com/vue-property-decorator/-/vue-property-decorator-8.5.1.tgz#571a91cf8d2b507f537d79bf8275af3184572fff"
+  integrity sha512-O6OUN2OMsYTGPvgFtXeBU3jPnX5ffQ9V4I1WfxFQ6dqz6cOUbR3Usou7kgFpfiXDvV7dJQSFcJ5yUPgOtPPm1Q==
+  dependencies:
+    vue-class-component "^7.1.0"
+
 vue-router@^3.5.1:
   version "3.5.1"
   resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-3.5.1.tgz#edf3cf4907952d1e0583e079237220c5ff6eb6c9"
   integrity sha512-RRQNLT8Mzr8z7eL4p7BtKvRaTSGdCbTy2+Mm5HTJvLGYSSeG9gDzNasJPP/yOYKLy+/cLG/ftrqq5fvkFwBJEw==
+
+vue-scenejs@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/vue-scenejs/-/vue-scenejs-1.1.0.tgz#6e45ad1fa53f82e6a94df5abc0b8bf81ad1612d5"
+  integrity sha512-NRrNEfdWEHFiai4TK2ofIgp1iD5pQvLVLmycjI7kusCyBFslqF9rBTJwHDXWVD6JhMxNSX8QLWAY2u1k1DFNlg==
+  dependencies:
+    scenejs "^1.0.1"
+    vue-property-decorator "^8.0.0"
 
 vue-style-loader@^4.1.0, vue-style-loader@^4.1.2:
   version "4.1.3"
