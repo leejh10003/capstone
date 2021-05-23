@@ -1,9 +1,10 @@
 <template>
   <div id="app">
-    <div :style="{width: '500px', height: '100px'}">
+    <button @click="top = 30">안녕!</button>
+    <div :style="{width: '100vw', height: '200px', position: 'absolute', bottom: '0'}">
       <VueDragResize
           :isActive="true"
-          :w="200"
+          :w="100"
           :h="200"
           :sticks="['mr', 'ml']"
           :snapToGrid="true"
@@ -38,10 +39,10 @@ export default {
 
   methods: {
     resize(newRect) {
-      this.width = Math.floor(newRect.width/10) * 10;
-      this.height = Math.floor(newRect.height/10) * 10;
-      this.top = Math.floor(newRect.top/10) * 10;
-      this.left = Math.floor(newRect.left/10) * 10;
+      this.width = Math.floor(newRect.width/1) * 1;
+      this.height = Math.floor(newRect.height/1) * 1;
+      this.top = Math.floor(newRect.top/1) * 1;
+      this.left = Math.floor(newRect.left/1) * 1;
     },
   },
 };

@@ -15,6 +15,7 @@
     "core-js": "^3.6.5",
     "gantt-elastic": "^1.0.12",
     "gpu.js": "^2.11.2",
+    "lodash": "^4.17.21",
     "video-editing-timeline-vue": "^1.0.0",
     "vue": "^2.6.11",
     "vue-apollo": "^3.0.0-beta.11",

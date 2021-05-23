@@ -9,6 +9,7 @@
       <router-link to="/gpu">GPU</router-link> |
       <router-link to="/project/11">GraphQL</router-link> |
       <router-link to="/layout">Layout</router-link> |
+      <router-link to="/drag">Drag</router-link> |
       <button @click="logout">Logout</button>
     </div>
     <router-view/>
