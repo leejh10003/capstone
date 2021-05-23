@@ -1,5 +1,9 @@
 <template>
   <div>
+    <!--TODO: Implement custom timeline track add-->
+    <!--TODO: Implement custom timeline track zoom-->
+    <!--TODO: Implement custom drag and drop file upload-->
+    <!--TODO: Implement custom drag and drop clip add-->
     <div class="drop-zone"
       v-for="(track, trackIndex) in tracks"
       :key="`track${trackIndex}`"
