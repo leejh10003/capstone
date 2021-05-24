@@ -9778,6 +9778,11 @@ matcher@^3.0.0:
   dependencies:
     escape-string-regexp "^4.0.0"
 
+material-icons@^0.6.4:
+  version "0.6.4"
+  resolved "https://registry.yarnpkg.com/material-icons/-/material-icons-0.6.4.tgz#d0a120651c75058fe328c7ea9abb5b5be7e1b194"
+  integrity sha512-pAx0WSSGx4l6h8aMap+09TFMNMZUwGYlN0iWtK2vvHDJUe5B0MPmRyqwj42ov/x+kEqXuDKHT+2RUFfNZB3aUg==
+
 md5.js@^1.3.4:
   version "1.3.5"
   resolved "https://registry.yarnpkg.com/md5.js/-/md5.js-1.3.5.tgz#b5d07b8e3216e3e27cd728d72f70d1e6a342005f"
@@ -13847,10 +13852,18 @@ vue2-dropzone@^3.6.0:
   dependencies:
     dropzone "^5.5.1"
 
-vue@^2.6.10, vue@^2.6.11:
+vue@^2.6.10, vue@^2.6.11, vue@^2.6.9:
   version "2.6.12"
   resolved "https://registry.yarnpkg.com/vue/-/vue-2.6.12.tgz#f5ebd4fa6bd2869403e29a896aed4904456c9123"
   integrity sha512-uhmLFETqPPNyuLLbsKz6ioJ4q7AZHzD8ZVFNATNyICSZouqP2Sz0rotWQC8UNBF6VGSCs5abnKJoStA6JbCbfg==
+
+vuesax@^3.12.2:
+  version "3.12.2"
+  resolved "https://registry.yarnpkg.com/vuesax/-/vuesax-3.12.2.tgz#4cc6b8fdfaf6fff45432c7b4b5c5be5080a3c21a"
+  integrity sha512-fdzcTPsrVklhWXtC8o07n9+SCmdQ8rxD9cZxNUx8KnbSH/Ss5azIHLLwMoNQuwT6kBFUcRzxVTfDh8jHzoSXaw==
+  dependencies:
+    chalk "^2.4.2"
+    vue "^2.6.9"
 
 watchpack-chokidar2@^2.0.1:
   version "2.0.1"

@@ -1,27 +1,37 @@
 <template>
-  <div>
-    <!--TODO: Implement custom timeline track add-->
-    <!--TODO: Implement custom timeline track zoom-->
-    <!--TODO: Implement custom drag and drop file upload-->
-    <!--TODO: Implement custom drag and drop clip add-->
-    <div class="drop-zone"
-      v-for="(track, trackIndex) in tracks"
-      :key="`track${trackIndex}`"
-      :ref="`track${trackIndex}`"
-      :style="{ position: 'relative' }"
-      @dragenter.prevent
-      @dragover.prevent
-      @drop="onDrop($event, trackIndex)"
-    >
-      <div
-        v-for="clip in track.clips"
-        :key="`clip${clip.id}`"
-        class="drag-el"
-        :style="{ position: 'absolute', left: `${clip.trackOffset}px`, width: `${(clip.end - clip.start)}px` }"
-        :ref="`clip${clip.id}`"
-        draggable="true"
-        @dragstart="startDrag($event, clip, trackIndex)">
-        {{ clip.id }}
+  <div id="editor">
+    <div id="videos">
+    </div>
+    <div id="timeline">
+      <!--TODO: Implement custom timeline track zoom-->
+      <!--TODO: Implement custom drag and drop file upload-->
+      <!--TODO: Implement custom drag and drop clip add-->
+      <!--TODO: Implememt custom resizing-->
+      <!--TODO: Implememt custom time bar-->
+      <div id="buttons">
+        <vs-button color="primary" type="filled" icon="add" @click="addTrack" style="float: right">트랙 추가</vs-button>
+      </div>
+      <div id="tracks">
+        <div class="drop-zone"
+          v-for="(track, trackIndex) in tracks"
+          :key="`track${trackIndex}`"
+          :ref="`track${trackIndex}`"
+          :style="{ position: 'relative' }"
+          @dragenter.prevent
+          @dragover.prevent
+          @drop="onDrop($event, trackIndex)"
+        >
+          <div
+            v-for="clip in track.clips"
+            :key="`clip${clip.id}`"
+            class="drag-el"
+            :style="{ position: 'absolute', left: `${clip.trackOffset}px`, width: `${(clip.end - clip.start)}px` }"
+            :ref="`clip${clip.id}`"
+            draggable="true"
+            @dragstart="startDrag($event, clip, trackIndex)">
+            {{ clip.id }}
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -32,6 +42,41 @@ import _ from 'lodash'//eslint-disable-line no-unused-vars
 export default {
   data: function(){
     return {
+      trackId: null,
+      videos: [{
+        id: 0,
+        name: 123
+      },{
+        id: 1,
+        name: 123
+      },{
+        id: 2,
+        name: 123
+      },{
+        id: 3,
+        name: 123
+      },{
+        id: 4,
+        name: 123
+      },{
+        id: 5,
+        name: 123
+      },{
+        id: 6,
+        name: 123
+      },{
+        id: 7,
+        name: 123
+      },{
+        id: 8,
+        name: 123
+      },{
+        id: 9,
+        name: 123
+      },{
+        id: 10,
+        name: 123
+      },],
       tracks: [{
         name: '',
         id: 0,
@@ -58,6 +103,7 @@ export default {
       }, {
         name: '',
         id: 2,
+        clips: []
       }]
     }
   },
@@ -68,6 +114,29 @@ export default {
       event.dataTransfer.setData('clipId', item.id)
       event.dataTransfer.setData('xOffset', event.clientX - this.$refs[`clip${item.id}`][0].getClientRects()[0].x)
       event.dataTransfer.setData('from', from)
+    },
+    splitThree: function(input){
+      const arr = []
+      for(var i = 0; i < input.length; i += 3){
+        arr.push(input.slice(i, Math.min(i + 3, input.length)))
+      }
+      return arr
+    },
+    addTrack: function(){
+      const id = this.tracks?.reduce((prev, next) => Math.max(prev, next), 0) ?? 0
+      if (this.tracks){
+        this.tracks = [{
+          name: '',
+          id,
+          clips: []
+        }].concat(this.tracks)
+      } else {
+        this.tracks = [{
+          name: '',
+          id,
+          clips: []
+        }]
+      }
     },
     onDrop: function (event, toward) {
       const id = parseInt(event.dataTransfer.getData('clipId'))
@@ -99,15 +168,43 @@ export default {
 <style>
 .drop-zone{
   width: 100%;
-  margin: 50px auto;
+  margin: 10px auto;
   background-color: #ecf0f1;
-  padding: 10px;
   display: flex;
+  height: 32px;
 }
 .drag-el{
   background-color: #3498db;
   color: white;
   padding: 5px;
   margin-bottom: 10px;
+}
+#tracks{
+  overflow: scroll;
+  height: 300px;
+  width: calc(100vw - 300px);
+}
+#buttons{
+  width: calc(100vw - 300px);
+  height: 30px;
+}
+#timeline{
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  width: calc(100vw - 300px);
+}
+#videos{
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  width: 300px;
+  background-color: #000000;
+  height: 300px;
+  overflow: scroll;
+}
+#editor{
+  height: 100vh;
+  position: relative;
 }
 </style>

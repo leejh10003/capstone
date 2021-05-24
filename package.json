@@ -16,6 +16,7 @@
     "gantt-elastic": "^1.0.12",
     "gpu.js": "^2.11.2",
     "lodash": "^4.17.21",
+    "material-icons": "^0.6.4",
     "video-editing-timeline-vue": "^1.0.0",
     "vue": "^2.6.11",
     "vue-apollo": "^3.0.0-beta.11",
@@ -24,7 +25,8 @@
     "vue-grid-layout": "^2.3.12",
     "vue-router": "^3.5.1",
     "vue-scenejs": "^1.1.0",
-    "vue2-dropzone": "^3.6.0"
+    "vue2-dropzone": "^3.6.0",
+    "vuesax": "^3.12.2"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
