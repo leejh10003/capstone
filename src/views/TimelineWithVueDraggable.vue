@@ -1,11 +1,28 @@
 <template>
   <div id="editor">
     <div id="videos">
+      <div
+        v-for="(row, rowIndex) in splitThree(videos)"
+        :key="`row${rowIndex}`"
+        @dragover.prevent
+        @dragenter.prevent
+        @drop.prevent="dropFile"
+        class="row">
+        <div
+          class="video"
+          v-for="video in row"
+          :key="`video${video.id}`"
+          draggable="true"
+          @dragstart="startDrag($event, video, null, 'fromVideos')"
+        >
+        {{video.id}}
+        {{video.name}}
+        </div>
+      </div>
     </div>
     <div id="timeline">
       <!--TODO: Implement custom timeline track zoom-->
       <!--TODO: Implement custom drag and drop file upload-->
-      <!--TODO: Implement custom drag and drop clip add-->
       <!--TODO: Implememt custom resizing-->
       <!--TODO: Implememt custom time bar-->
       <div id="buttons">
@@ -28,7 +45,7 @@
             :style="{ position: 'absolute', left: `${clip.trackOffset}px`, width: `${(clip.end - clip.start)}px` }"
             :ref="`clip${clip.id}`"
             draggable="true"
-            @dragstart="startDrag($event, clip, trackIndex)">
+            @dragstart="startDrag($event, clip, trackIndex, 'fromTrack')">
             {{ clip.id }}
           </div>
         </div>
@@ -85,11 +102,13 @@ export default {
           start: 0,
           end: 40,
           trackOffset: 0,
+          videoId: 0,
         },{
           id: 1,
           start: 50,
           end: 60,
           trackOffset: 100,
+          videoId: 1,
         }]
       }, {
         name: '',
@@ -99,6 +118,7 @@ export default {
           start: 30,
           end: 50,
           trackOffset: 30,
+          videoId: 2,
         }]
       }, {
         name: '',
@@ -108,12 +128,24 @@ export default {
     }
   },
   methods: {
-    startDrag: function (event, item, from) {//eslint-disable-line no-unused-vars
-      event.dataTransfer.dropEffect = 'move'
-      event.dataTransfer.evvectAllowed = 'move'
-      event.dataTransfer.setData('clipId', item.id)
+    startDrag: function (event, item, from, kind) {//eslint-disable-line no-unused-vars
+      event.dataTransfer.setData('kind', kind)
       event.dataTransfer.setData('xOffset', event.clientX - this.$refs[`clip${item.id}`][0].getClientRects()[0].x)
-      event.dataTransfer.setData('from', from)
+      switch(kind){
+        case 'fromTrack':
+        event.dataTransfer.dropEffect = 'move'
+        event.dataTransfer.evvectAllowed = 'move'
+        event.dataTransfer.setData('clipId', item.id)
+        event.dataTransfer.setData('from', from)
+        break
+        case 'fromVideos':
+        event.dataTransfer.dropEffect = 'clone'
+        event.dataTransfer.evvectAllowed = 'clone'
+        event.dataTransfer.setData('videoId', item.id)
+      }
+    },
+    dropFile: function(event){
+      console.log(event.dataTransfer.files)
     },
     splitThree: function(input){
       const arr = []
@@ -139,27 +171,47 @@ export default {
       }
     },
     onDrop: function (event, toward) {
-      const id = parseInt(event.dataTransfer.getData('clipId'))
-      const xOffset = parseInt(event.dataTransfer.getData('xOffset'))
-      const from = parseInt(event.dataTransfer.getData('from'))
-      const allClips = this.tracks.reduce((prev, next) => next.clips ? prev.concat(next.clips) : prev, [])//eslint-disable-line no-unused-vars
-      const clip = _.cloneDeep(this.tracks.reduce((prev, next) => next.clips ?  prev.concat(next.clips.filter((clip) => clip.id === parseInt(event.dataTransfer.getData('clipId')))) : prev, [])[0]) //eslint-disable-line no-unused-vars
-      const trackPixelInfo = this.$refs[`track${toward}`][0].getClientRects()
-      this.tracks[from].clips = this.tracks[from].clips.filter((clip) => clip.id !== id)
-      if (this.tracks[toward].clips){
-        this.tracks[toward].clips.push({
-          ...clip,
+      const kind = event.dataTransfer.getData('kind')
+      if(kind === 'fromTrack'){
+        const id = parseInt(event.dataTransfer.getData('clipId'))
+        const xOffset = parseInt(event.dataTransfer.getData('xOffset'))
+        const from = parseInt(event.dataTransfer.getData('from'))
+        const clip = _.cloneDeep(this.tracks.reduce((prev, next) => next.clips ?  prev.concat(next.clips.filter((clip) => clip.id === parseInt(event.dataTransfer.getData('clipId')))) : prev, [])[0]) //eslint-disable-line no-unused-vars
+        const trackPixelInfo = this.$refs[`track${toward}`][0].getClientRects()
+        this.tracks[from].clips = this.tracks[from].clips.filter((clip) => clip.id !== id)
+        if (this.tracks[toward].clips){
+          this.tracks[toward].clips.push({
+            ...clip,
+            trackOffset: event.clientX -  xOffset - trackPixelInfo[0].x
+          })
+          this.tracks[toward].clips.sort((former, latter) => former.trackOffset - latter.trackOffset)
+          console.log(this.tracks[toward])
+        } else {
+          this.tracks[toward].clips = [{
+            ...clip,
+            trackOffset: event.clientX -  xOffset - trackPixelInfo[0].x
+          }]
+        }
+      } else if (kind === 'fromVideos'){
+        const videoId = parseInt(event.dataTransfer.getData('videoId'))
+        const xOffset = parseInt(event.dataTransfer.getData('xOffset'))
+        const allClips = this.tracks.reduce((prev, next) => next.clips ? prev.concat(next.clips) : prev, [])//eslint-disable-line no-unused-vars
+        const id = (allClips.reduce((prev, next) => prev ? Math.max(prev, next.id) : next.id) ?? -1) + 1
+        const trackPixelInfo = this.$refs[`track${toward}`][0].getClientRects()
+        const newClip = {
+          id,
+          start: 50,
+          end: 60,
+          videoId,
           trackOffset: event.clientX -  xOffset - trackPixelInfo[0].x
-        })
-        this.tracks[toward].clips.sort((former, latter) => former.trackOffset - latter.trackOffset)
-        console.log(this.tracks[toward])
-      } else {
-        this.tracks[toward].clips = [{
-          ...clip,
-          trackOffset: event.clientX -  xOffset - trackPixelInfo[0].x
-        }]
+        }
+        if (this.tracks[toward].clips){
+          this.tracks[toward].clips.push(newClip)
+          console.log(this.tracks[toward])
+        } else {
+          this.tracks[toward].clips = [newClip]
+        }
       }
-      //TODO: align clips if former track pushes
     }
   },
 }
@@ -206,5 +258,15 @@ export default {
 #editor{
   height: 100vh;
   position: relative;
+}
+.video{
+  width: 80px;
+  margin: 10px;
+  height: 80px;
+  color: white;
+  background-color: red;
+}
+.row{
+  display: flex;
 }
 </style>
