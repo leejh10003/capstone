@@ -1,13 +1,7 @@
 import Vue from 'vue'
 import VueApollo from 'vue-apollo'
-import { /*createApolloClient, */restartWebsockets } from 'vue-cli-plugin-apollo/graphql-client'
-import { split } from 'apollo-link'
-import { WebSocketLink } from 'apollo-link-ws'
-import { getMainDefinition } from 'apollo-utilities'
-import { HttpLink } from "apollo-link-http";
-import { InMemoryCache } from "apollo-cache-inmemory";
-import ApolloClient from "apollo-client";
-// import { Auth } from 'aws-amplify'
+import { createApolloClient, restartWebsockets } from 'vue-cli-plugin-apollo/graphql-client'
+import { Auth } from 'aws-amplify'
 
 // Install the vue plugin
 Vue.use(VueApollo)
@@ -17,47 +11,8 @@ const AUTH_TOKEN = 'apollo-token'
 
 // Http endpoint
 
-const httpLink = new HttpLink({
-  // You should use an absolute URL here
-  uri: process.env.VUE_APP_GRAPHQL_HTTP || 'https://trello.jeontuk-11.link/v1/graphql',
-});
-
-// Create the subscription websocket link
-const wsLink = new WebSocketLink({
-  uri: process.env.VUE_APP_GRAPHQL_WS || 'wss://trello.jeontuk-11.link/v1/graphql',
-  options: {
-    reconnect: true,
-    lazy: true
-  },
-});
-
-// using the ability to split links, you can send data to each link
-// depending on what kind of operation is being sent
-const link = split(
-  // split based on operation type
-  ({ query }) => {
-    const definition = getMainDefinition(query)
-    return definition.kind === 'OperationDefinition' &&
-      definition.operation === 'subscription'
-  },
-  wsLink,
-  httpLink,
-);
-
-// Create the apollo client
-const apolloClient = new ApolloClient({
-  link,
-  cache: new InMemoryCache(),
-  connectToDevTools: true,
-})
-
-export const apolloProvider = new VueApollo({
-  defaultClient: apolloClient,
-})
-
-
 // Config
-/*const defaultOptions = {
+const defaultOptions = {
   // You can use `https` for secure connection (recommended in production)
   httpEndpoint: process.env.VUE_APP_GRAPHQL_HTTP || 'http://ec2-13-125-81-43.ap-northeast-2.compute.amazonaws.com:8080/v1/graphql',
   // You can use `wss` for secure connection (recommended in production)
@@ -92,7 +47,7 @@ export const apolloProvider = new VueApollo({
         method: 'post'
       })
       removeToken()
-      location.replace('/#/login')
+      location.replace('/#/login')*/
       console.error(e)
     }
   }
@@ -136,7 +91,7 @@ export function createProvider (options = {}) {
   })
 
   return apolloProvider
-}*/
+}
 
 // Manually call this when user log in
 export async function onLogin (apolloClient) {
