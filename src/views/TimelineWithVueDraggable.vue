@@ -12,6 +12,7 @@
           class="video"
           v-for="video in row"
           :key="`video${video.id}`"
+          :ref="`video${video.id}`"
           draggable="true"
           @dragstart="startDrag($event, video, null, 'fromVideos')"
         >
@@ -27,6 +28,7 @@
       <!--TODO: Implememt custom time bar-->
       <div id="buttons">
         <vs-button color="primary" type="filled" icon="add" @click="addTrack" style="float: right">트랙 추가</vs-button>
+        <vs-button color="primary" type="filled" icon="add" @click="play" style="float: right">재생</vs-button>
       </div>
       <div id="tracks">
         <div class="drop-zone"
@@ -38,6 +40,11 @@
           @dragover.prevent
           @drop="onDrop($event, trackIndex)"
         >
+          <div
+            id="playBar"
+            ref="playBar"
+            :style="{height: '300px', width: '1px', backgroundColor: 'red', zIndex: 1, position: 'static', 'marginLeft': `${current}px`}"
+          />
           <div
             v-for="clip in track.clips"
             :key="`clip${clip.id}`"
@@ -59,6 +66,7 @@ import _ from 'lodash'//eslint-disable-line no-unused-vars
 export default {
   data: function(){
     return {
+      current: 0,
       trackId: null,
       videos: [{
         id: 0,
@@ -128,9 +136,12 @@ export default {
     }
   },
   methods: {
+    play: function(){
+      console.log("played")
+    },
     startDrag: function (event, item, from, kind) {//eslint-disable-line no-unused-vars
       event.dataTransfer.setData('kind', kind)
-      event.dataTransfer.setData('xOffset', event.clientX - this.$refs[`clip${item.id}`][0].getClientRects()[0].x)
+      event.dataTransfer.setData('xOffset', event.clientX - this.$refs[`${kind === 'fromTrack' ? 'clip' : 'video'}${item.id}`][0].getClientRects()[0].x)
       switch(kind){
         case 'fromTrack':
         event.dataTransfer.dropEffect = 'move'
