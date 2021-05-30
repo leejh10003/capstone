@@ -22,15 +22,29 @@
       </div>
     </div>
     <div id="timeline">
-      <!--TODO: Implement custom timeline track zoom-->
+      <!--OPTIONAL TODO: Implement custom timeline track zoom-->
       <!--TODO: Implement custom drag and drop file upload-->
-      <!--TODO: Implememt custom resizing-->
-      <!--TODO: Implememt custom time bar-->
+      <!--OPTIONAL TODO: Implememt custom resizing-->
+      <!--OPTIONAL TODO: Implememt custom time bar-->
       <div id="buttons">
         <vs-button color="primary" type="filled" icon="add" @click="addTrack" style="float: right">트랙 추가</vs-button>
-        <vs-button color="primary" type="filled" icon="add" @click="play" style="float: right">재생</vs-button>
+        <vs-button color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play" style="float: right"></vs-button>
       </div>
-      <div id="tracks">
+      <div
+        id="tracks"
+        @mouseenter="enter"
+        @mouseOut="out"
+        @mousemove="hovering">
+          <div
+            id="playBar"
+            ref="playBar"
+            :style="{height: '300px', width: '1px', backgroundColor: 'red', zIndex: 2, position: 'absolute', 'marginLeft': `${current}px`}"
+          />
+          <div
+            id="previewMouseBar"
+            ref="previewMouseBar"
+            :style="{height: '300px', width: '1px', backgroundColor: 'black', zIndex: 1, position: 'absolute', 'marginLeft': `${preview}px`}"
+          />
         <div class="drop-zone"
           v-for="(track, trackIndex) in tracks"
           :key="`track${trackIndex}`"
@@ -40,11 +54,6 @@
           @dragover.prevent
           @drop="onDrop($event, trackIndex)"
         >
-          <div
-            id="playBar"
-            ref="playBar"
-            :style="{height: '300px', width: '1px', backgroundColor: 'red', zIndex: 1, position: 'static', 'marginLeft': `${current}px`}"
-          />
           <div
             v-for="clip in track.clips"
             :key="`clip${clip.id}`"
@@ -64,9 +73,15 @@
 <script>
 import _ from 'lodash'//eslint-disable-line no-unused-vars
 export default {
+  mounted: function (){
+    setInterval(this.nextFrame, 1000/24)
+  },
   data: function(){
     return {
       current: 0,
+      preview: 0,
+      playing: false,
+      mouseIsIn: null,
       trackId: null,
       videos: [{
         id: 0,
@@ -137,7 +152,34 @@ export default {
   },
   methods: {
     play: function(){
-      console.log("played")
+      this.playing = !this.playing
+    },
+    nextFrame: function(){
+      if (this.playing){
+        this.current += 1
+      }
+    },
+    enter: function() {
+      this.mouseIsIn = true
+    },
+    out: function() {
+      this.mouseIsIn = false
+    },
+    hovering: function(event){
+      //console.log(event.layerX, event.layerY, event.offsetX, event.offsetY)
+      if (this.mouseIsIn === false || this.mouseIsIn === null){
+        this.preview = event.offsetX
+      } else {
+        if (event.offsetX > 10){
+          this.preview = event.offsetX
+        } else {
+          if (Math.abs(this.preview - event.offsetX) < 10){
+            this.preview = event.offsetX
+          } else {
+            this.preview = Math.max(event.offsetX, this.preview)
+          }
+        }
+      }
     },
     startDrag: function (event, item, from, kind) {//eslint-disable-line no-unused-vars
       event.dataTransfer.setData('kind', kind)
@@ -230,7 +272,7 @@ export default {
 
 <style>
 .drop-zone{
-  width: 100%;
+  width: calc(100% + 150px);
   margin: 10px auto;
   background-color: #ecf0f1;
   display: flex;
