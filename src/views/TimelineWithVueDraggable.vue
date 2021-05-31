@@ -87,7 +87,6 @@ export default {
         }
       },
       update: (data) => {
-        console.log(data)
         return data.projects
       },
       query: gql`query ($id: bigint!){
@@ -274,15 +273,20 @@ export default {
         event.dataTransfer.setData('videoId', item.id)
       }
     },
-    dropFile: function(event){
-      console.log(event.dataTransfer.files)
+    dropFile: async function(event) {
       //TODO: commit to server first and get id
       if (event.dataTransfer.files.length > 0){
-        const id = this.videos.reduce((prev, next) => prev ? Math.max(next.id, prev) : next.id) + 1
         const { name } = event?.dataTransfer?.files?.[0]
-        this.videos.push({
-          id,
-          name
+        const { data: { insert_videos_one: { id } } } = await this.$apollo.mutate({//eslint-disable-line no-unused-vars
+          variables: {
+            projectId: this.$route.params.id,
+            name
+          },
+          mutation: gql`mutation ($projectId: bigint!, $name: String!){
+            insert_videos_one(object: {project_id: $projectId, size: 0, filename: $name, exif: ""}) {
+              id
+            }
+          }`
         })
       }
     },
@@ -324,7 +328,6 @@ export default {
             trackOffset: event.clientX -  xOffset - trackPixelInfo[0].x
           })
           this.tracks[toward].clips.sort((former, latter) => former.trackOffset - latter.trackOffset)
-          console.log(this.tracks[toward])
         } else {
           this.tracks[toward].clips = [{
             ...clip,
@@ -346,7 +349,6 @@ export default {
         }
         if (this.tracks[toward].clips){
           this.tracks[toward].clips.push(newClip)
-          console.log(this.tracks[toward])
         } else {
           this.tracks[toward].clips = [newClip]
         }
