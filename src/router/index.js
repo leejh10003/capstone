@@ -49,7 +49,7 @@ const routes = [
     component: () => import (/* webpackChunkName: "login" */ '../views/Layout.vue'),
   },
   {
-    path: '/drag',
+    path: '/drag/:id(\\d+)',
     name: 'Drag',
     component: () => import (/* webpackChunkName: "login" */ '../views/TimelineWithVueDraggable.vue'),
   }

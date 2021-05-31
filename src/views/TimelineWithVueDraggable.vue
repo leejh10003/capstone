@@ -1,8 +1,10 @@
 <template>
-  <div id="editor">
+  <div v-if="$apollo.queries.projects.loading">
+  </div>
+  <div v-else id="editor">
     <div id="videos">
       <div
-        v-for="(row, rowIndex) in splitThree(videos)"
+        v-for="(row, rowIndex) in splitThree(projects[0].videos)"
         :key="`row${rowIndex}`"
         @dragover.prevent
         @dragenter.prevent
@@ -17,7 +19,7 @@
           @dragstart="startDrag($event, video, null, 'fromVideos')"
         >
         {{video.id}}
-        {{video.name}}
+        {{video.filename}}
         </div>
       </div>
     </div>
@@ -58,11 +60,11 @@
             v-for="clip in track.clips"
             :key="`clip${clip.id}`"
             class="drag-el"
-            :style="{ position: 'absolute', left: `${clip.trackOffset}px`, width: `${(clip.end - clip.start)}px` }"
+            :style="{ position: 'absolute', left: `${clip.trackOffset}px`, width: `${(clip.end - clip.start)}px`, textAlign: 'start', padding: '0px', height: '32px' }"
             :ref="`clip${clip.id}`"
             draggable="true"
             @dragstart="startDrag($event, clip, trackIndex, 'fromTrack')">
-            {{ clip.id }}
+            <span style="sgyle: 2px; margin: 0px; padding: 0px; font-size: 10px;">{{ clip.id }}</span>
           </div>
         </div>
       </div>
@@ -72,9 +74,84 @@
 
 <script>
 import _ from 'lodash'//eslint-disable-line no-unused-vars
+import gql from 'graphql-tag'
 export default {
   mounted: function (){
     setInterval(this.nextFrame, 1000/24)
+  },
+  apollo: {
+    projects: {
+      variables: function() {
+        return {
+          id: this.$route.params.id
+        }
+      },
+      update: (data) => {
+        console.log(data)
+        return data.projects
+      },
+      query: gql`query ($id: bigint!){
+        projects(where: {id: {_eq: $id}}) {
+          id
+          videos(order_by: [{id: asc}]) {
+            id
+            exif
+            filename
+            size
+          }
+          tracks {
+            id
+            clips {
+              effect
+              id
+              played_time
+              video {
+                id
+                exif
+                filename
+                size
+              }
+            }
+          }
+        }
+      }`,
+      subscribeToMore: {
+        variables: function (){
+          return {
+            id: this.$route.params.id
+          }
+        },
+        document: gql`subscription ($id: bigint!){
+          projects(where: {id: {_eq: $id}}) {
+            id
+            videos(order_by: [{id: desc}]) {
+              id
+              exif
+              filename
+              size
+            }
+            tracks {
+              id
+              clips {
+                effect
+                id
+                played_time
+                video {
+                  id
+                  exif
+                  filename
+                  size
+                }
+              }
+            }
+          }
+        }
+        `,
+        updateQuery: (previousResult, { subscriptionData }) => {
+          return subscriptionData.data
+        },
+      }
+    }
   },
   data: function(){
     return {
@@ -129,7 +206,7 @@ export default {
         },{
           id: 1,
           start: 50,
-          end: 60,
+          end: 150,
           trackOffset: 100,
           videoId: 1,
         }]
@@ -139,7 +216,7 @@ export default {
         clips: [{
           id: 2,
           start: 30,
-          end: 50,
+          end: 130,
           trackOffset: 30,
           videoId: 2,
         }]
@@ -199,6 +276,15 @@ export default {
     },
     dropFile: function(event){
       console.log(event.dataTransfer.files)
+      //TODO: commit to server first and get id
+      if (event.dataTransfer.files.length > 0){
+        const id = this.videos.reduce((prev, next) => prev ? Math.max(next.id, prev) : next.id) + 1
+        const { name } = event?.dataTransfer?.files?.[0]
+        this.videos.push({
+          id,
+          name
+        })
+      }
     },
     splitThree: function(input){
       const arr = []
