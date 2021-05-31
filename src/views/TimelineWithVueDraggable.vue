@@ -1,11 +1,8 @@
 <template>
-  <div v-if="$apollo.queries.projects.loading">
+  <div v-if="projects === null">
   </div>
   <div v-else id="editor">
-    <div id="buttons">
-      <vs-button color="primary" type="filled" icon="add" @click="addTrack" style="float: right">트랙 추가</vs-button>
-      <vs-button color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play" style="float: right"></vs-button>
-    </div>
+    <div style="position: absolute; bottom: 300px;"><vs-button color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play"></vs-button><vs-button color="primary" type="filled" icon="add" @click="addTrack" style="z-index: 1; float:right">트랙 추가</vs-button></div>
     <simplebar data-simplebar-auto-hide="true" id="videos">
         <div
           v-for="(row, rowIndex) in splitThree(projects[0].videos)"
@@ -28,10 +25,6 @@
         </div>
     </simplebar>
     <simplebar data-simplebar-auto-hide="true" id="timeline" :style="{height: '300px', width: trackWidths}">
-      <!--OPTIONAL TODO: Implement custom timeline track zoom-->
-      <!--TODO: Implement custom drag and drop file upload-->
-      <!--OPTIONAL TODO: Implememt custom resizing-->
-      <!--OPTIONAL TODO: Implememt custom time bar-->
       <div
         @mouseenter="enter"
         @mouseOut="out"
@@ -47,13 +40,13 @@
             :style="{height: '300px', width: '1px', backgroundColor: 'black', zIndex: 1, position: 'absolute', 'marginLeft': `${preview}px`}"
           />
         <div class="drop-zone"
-          v-for="(track, trackIndex) in tracks"
-          :key="`track${trackIndex}`"
-          :ref="`track${trackIndex}`"
+          v-for="track in projects[0].tracks"
+          :key="`track${track.id}`"
+          :ref="`track${track.id}`"
           :style="{ position: 'relative' }"
           @dragenter.prevent
           @dragover.prevent
-          @drop="onDrop($event, trackIndex)"
+          @drop="onDrop($event, track.id)"
         >
           <div
             class="playBar"
@@ -69,10 +62,10 @@
             v-for="clip in track.clips"
             :key="`clip${clip.id}`"
             class="drag-el"
-            :style="{ position: 'absolute', left: `${clip.trackOffset}px`, width: `${(clip.end - clip.start)}px`, textAlign: 'start', padding: '0px', height: '32px' }"
+            :style="{ position: 'absolute', left: `${clip.track_offset_time}px`, width: `${(clip.played_time)}px`, textAlign: 'start', padding: '0px', height: '32px' }"
             :ref="`clip${clip.id}`"
             draggable="true"
-            @dragstart="startDrag($event, clip, trackIndex, 'fromTrack')">
+            @dragstart="startDrag($event, clip, track.id, 'fromTrack')">
             <span style="sgyle: 2px; margin: 0px; padding: 0px; font-size: 10px;">{{ clip.id }}</span>
           </div>
         </div>
@@ -84,7 +77,7 @@
 <script>
 import simplebar from 'simplebar-vue';
 import 'simplebar/dist/simplebar.min.css';
-import _ from 'lodash'//eslint-disable-line no-unused-vars
+import _ from 'lodash'
 import gql from 'graphql-tag'
 export default {
   components: {
@@ -94,67 +87,27 @@ export default {
     setInterval(this.nextFrame, 1000/24)
     const outer = document.createElement('div');
     outer.style.visibility = 'hidden';
-    outer.style.overflow = 'scroll'; // forcing scrollbar to appear
-    outer.style.msOverflowStyle = 'scrollbar'; // needed for WinJS apps
+    outer.style.overflow = 'scroll';
+    outer.style.msOverflowStyle = 'scrollbar';
     document.body.appendChild(outer);
-
-    // Creating inner element and placing it in the container
     const inner = document.createElement('div');
     outer.appendChild(inner);
-
-    // Calculating difference between container's full width and the child width
     const scrollbarWidth = (outer.offsetWidth - inner.offsetWidth);
-
-    // Removing temporary elements from the DOM
     outer.parentNode.removeChild(outer);
     this.scrollbarWidth = scrollbarWidth
-    console.log(this.scrollbarWidth)
   },
   computed: {
     trackWidths: function () { return `calc(100% - 300px)` }
   },
   apollo: {
-    projects: {
-      variables: function() {
-        return {
-          id: this.$route.params.id
-        }
-      },
-      update: (data) => {
-        return data.projects
-      },
-      query: gql`query ($id: bigint!){
-        projects(where: {id: {_eq: $id}}) {
-          id
-          videos(order_by: [{id: asc}]) {
-            id
-            exif
-            filename
-            size
-          }
-          tracks {
-            id
-            clips {
-              effect
-              id
-              played_time
-              video {
-                id
-                exif
-                filename
-                size
-              }
-            }
-          }
-        }
-      }`,
-      subscribeToMore: {
+    $subscribe: {
+      projects: {
         variables: function (){
           return {
             id: this.$route.params.id
           }
         },
-        document: gql`subscription ($id: bigint!){
+        query: gql`subscription ($id: bigint!){
           projects(where: {id: {_eq: $id}}) {
             id
             videos(order_by: [{id: desc}]) {
@@ -163,11 +116,12 @@ export default {
               filename
               size
             }
-            tracks {
+            tracks(order_by: [{id: desc}]) {
               id
               clips {
                 effect
                 id
+                track_offset_time
                 played_time
                 video {
                   id
@@ -180,8 +134,8 @@ export default {
           }
         }
         `,
-        updateQuery: (previousResult, { subscriptionData }) => {
-          return subscriptionData.data
+        result: function ({ data }) {
+          this.projects = data.projects
         },
       }
     }
@@ -194,71 +148,7 @@ export default {
       playing: false,
       mouseIsIn: null,
       trackId: null,
-      videos: [{
-        id: 0,
-        name: 123
-      },{
-        id: 1,
-        name: 123
-      },{
-        id: 2,
-        name: 123
-      },{
-        id: 3,
-        name: 123
-      },{
-        id: 4,
-        name: 123
-      },{
-        id: 5,
-        name: 123
-      },{
-        id: 6,
-        name: 123
-      },{
-        id: 7,
-        name: 123
-      },{
-        id: 8,
-        name: 123
-      },{
-        id: 9,
-        name: 123
-      },{
-        id: 10,
-        name: 123
-      },],
-      tracks: [{
-        name: '',
-        id: 0,
-        clips: [{
-          id: 0,
-          start: 0,
-          end: 40,
-          trackOffset: 0,
-          videoId: 0,
-        },{
-          id: 1,
-          start: 50,
-          end: 150,
-          trackOffset: 100,
-          videoId: 1,
-        }]
-      }, {
-        name: '',
-        id: 1,
-        clips: [{
-          id: 2,
-          start: 30,
-          end: 130,
-          trackOffset: 30,
-          videoId: 2,
-        }]
-      }, {
-        name: '',
-        id: 2,
-        clips: []
-      }]
+      projects: null
     }
   },
   methods: {
@@ -277,7 +167,6 @@ export default {
       this.mouseIsIn = false
     },
     hovering: function(event){
-      //console.log(event.layerX, event.layerY, event.offsetX, event.offsetY)
       if (this.mouseIsIn === false || this.mouseIsIn === null){
         this.preview = event.offsetX
       } else {
@@ -292,7 +181,7 @@ export default {
         }
       }
     },
-    startDrag: function (event, item, from, kind) {//eslint-disable-line no-unused-vars
+    startDrag: function (event, item, from, kind) {
       event.dataTransfer.setData('kind', kind)
       event.dataTransfer.setData('xOffset', event.clientX - this.$refs[`${kind === 'fromTrack' ? 'clip' : 'video'}${item.id}`][0].getClientRects()[0].x)
       switch(kind){
@@ -309,7 +198,6 @@ export default {
       }
     },
     dropFile: async function(event) {
-      //TODO: commit to server first and get id
       if (event.dataTransfer.files.length > 0){
         const { name } = event?.dataTransfer?.files?.[0]
         const { data: { insert_videos_one: { id } } } = await this.$apollo.mutate({//eslint-disable-line no-unused-vars
@@ -317,6 +205,7 @@ export default {
             projectId: this.$route.params.id,
             name
           },
+          optimisticResponse: {},
           mutation: gql`mutation ($projectId: bigint!, $name: String!){
             insert_videos_one(object: {project_id: $projectId, size: 0, filename: $name, exif: ""}) {
               id
@@ -324,6 +213,7 @@ export default {
           }`
         })
       }
+      //TODO: upload real file
     },
     splitThree: function(input){
       const arr = []
@@ -332,61 +222,77 @@ export default {
       }
       return arr
     },
-    addTrack: function(){
-      const id = this.tracks?.reduce((prev, next) => Math.max(prev, next), 0) ?? 0
-      if (this.tracks){
-        this.tracks = [{
-          name: '',
-          id,
-          clips: []
-        }].concat(this.tracks)
-      } else {
-        this.tracks = [{
-          name: '',
-          id,
-          clips: []
-        }]
-      }
+    addTrack: async function(){
+      const id = (this.projects[0].tracks?.reduce((prev, next) => Math.max(prev, next.id), 0) ?? 0) + 1
+      this.projects[0].tracks = [{id, clips: []}].concat(this.projects[0].tracks)
+      await this.$apollo.mutate({
+        variables: {
+          project_id: this.$route.params.id
+        },
+        mutation: gql`mutation($project_id: bigint!){
+          insert_tracks_one(object: {project_id: $project_id}){
+            id
+          }
+        }`
+      })
     },
-    onDrop: function (event, toward) {
+    onDrop: async function (event, toward) {
       const kind = event.dataTransfer.getData('kind')
       if(kind === 'fromTrack'){
-        const id = parseInt(event.dataTransfer.getData('clipId'))
+        const clipId = parseInt(event.dataTransfer.getData('clipId'))
         const xOffset = parseInt(event.dataTransfer.getData('xOffset'))
         const from = parseInt(event.dataTransfer.getData('from'))
-        const clip = _.cloneDeep(this.tracks.reduce((prev, next) => next.clips ?  prev.concat(next.clips.filter((clip) => clip.id === parseInt(event.dataTransfer.getData('clipId')))) : prev, [])[0]) //eslint-disable-line no-unused-vars
         const trackPixelInfo = this.$refs[`track${toward}`][0].getClientRects()
-        this.tracks[from].clips = this.tracks[from].clips.filter((clip) => clip.id !== id)
-        if (this.tracks[toward].clips){
-          this.tracks[toward].clips.push({
-            ...clip,
+        const clip = _.cloneDeep(this.projects[0].tracks.filter((track) => track.id === from)[0].clips.filter((clip) => clip.id === clipId)[0])
+        const fromTrack = this.projects[0].tracks.filter((track) => track.id === from)[0]
+        fromTrack.clips = fromTrack.clips.filter((clip) => clip.id !== clipId)
+        const toTrack = this.projects[0].tracks.filter((track) => track.id === toward)[0]
+        toTrack.clips.push({
+          ...clip,
+          track_offset_time: event.clientX -  xOffset - trackPixelInfo[0].x
+        })
+        await this.$apollo.mutate({
+          variables: {
+            trackId: toward,
+            clipId,
             trackOffset: event.clientX -  xOffset - trackPixelInfo[0].x
-          })
-          this.tracks[toward].clips.sort((former, latter) => former.trackOffset - latter.trackOffset)
-        } else {
-          this.tracks[toward].clips = [{
-            ...clip,
-            trackOffset: event.clientX -  xOffset - trackPixelInfo[0].x
-          }]
-        }
+          },
+          mutation: gql`mutation ($clipId: bigint!, $trackId: bigint!, $trackOffset: float8!){
+            update_clips_by_pk(pk_columns: {id: $clipId}, _set: {track_id: $trackId, track_offset_time: $trackOffset}){
+              id
+            }
+          }`
+        })
       } else if (kind === 'fromVideos'){
         const videoId = parseInt(event.dataTransfer.getData('videoId'))
         const xOffset = parseInt(event.dataTransfer.getData('xOffset'))
-        const allClips = this.tracks.reduce((prev, next) => next.clips ? prev.concat(next.clips) : prev, [])//eslint-disable-line no-unused-vars
-        const id = (allClips.reduce((prev, next) => prev ? Math.max(prev, next.id) : next.id) ?? -1) + 1
+        const allClips = this.projects[0].tracks.reduce((prev, next) => next.clips ? prev.concat(next.clips) : prev, [])
+        const id = (allClips.reduce((prev, next) => prev ? Math.max(prev, next.id) : next.id, 0) ?? -1) + 1
         const trackPixelInfo = this.$refs[`track${toward}`][0].getClientRects()
-        const newClip = {
+        const toTrack = this.projects[0].tracks.filter((track) => track.id === toward)[0]
+        toTrack.clips.push({
+          played_time: 30,
+          track_id: toward,
+          video_id: videoId,
           id,
-          start: 50,
-          end: 60,
-          videoId,
-          trackOffset: event.clientX -  xOffset - trackPixelInfo[0].x
-        }
-        if (this.tracks[toward].clips){
-          this.tracks[toward].clips.push(newClip)
-        } else {
-          this.tracks[toward].clips = [newClip]
-        }
+          track_offset_time: event.clientX -  xOffset - trackPixelInfo[0].x
+        })
+        await this.$apollo.mutate({
+          variables: {
+            object: {
+              played_time: 30,
+              track_id: toward,
+              track_offset_time: event.clientX -  xOffset - trackPixelInfo[0].x,
+              video_id: videoId,
+              video_offset_time: 0
+            }
+          },
+          mutation: gql`mutation ($object:clips_insert_input!) {
+            insert_clips_one(object: $object) {
+              id
+            }
+          }`
+        })
       }
     }
   },
