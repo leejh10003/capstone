@@ -17,6 +17,7 @@
     "gpu.js": "^2.11.2",
     "lodash": "^4.17.21",
     "material-icons": "^0.6.4",
+    "simplebar-vue": "^1.6.3",
     "video-editing-timeline-vue": "^1.0.0",
     "vue": "^2.6.11",
     "vue-apollo": "^3.0.0-beta.11",

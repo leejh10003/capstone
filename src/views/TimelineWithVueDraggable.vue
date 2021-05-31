@@ -2,48 +2,47 @@
   <div v-if="$apollo.queries.projects.loading">
   </div>
   <div v-else id="editor">
-    <div id="videos">
-      <div
-        v-for="(row, rowIndex) in splitThree(projects[0].videos)"
-        :key="`row${rowIndex}`"
-        @dragover.prevent
-        @dragenter.prevent
-        @drop.prevent="dropFile"
-        class="row">
-        <div
-          class="video"
-          v-for="video in row"
-          :key="`video${video.id}`"
-          :ref="`video${video.id}`"
-          draggable="true"
-          @dragstart="startDrag($event, video, null, 'fromVideos')"
-        >
-        {{video.id}}
-        {{video.filename}}
-        </div>
-      </div>
+    <div id="buttons">
+      <vs-button color="primary" type="filled" icon="add" @click="addTrack" style="float: right">트랙 추가</vs-button>
+      <vs-button color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play" style="float: right"></vs-button>
     </div>
-    <div id="timeline">
+    <simplebar data-simplebar-auto-hide="true" id="videos">
+        <div
+          v-for="(row, rowIndex) in splitThree(projects[0].videos)"
+          :key="`row${rowIndex}`"
+          @dragover.prevent
+          @dragenter.prevent
+          @drop.prevent="dropFile"
+          class="row">
+          <div
+            class="video"
+            v-for="video in row"
+            :key="`video${video.id}`"
+            :ref="`video${video.id}`"
+            draggable="true"
+            @dragstart="startDrag($event, video, null, 'fromVideos')"
+          >
+          {{video.id}}
+          {{video.filename}}
+          </div>
+        </div>
+    </simplebar>
+    <simplebar data-simplebar-auto-hide="true" id="timeline" :style="{height: '300px', width: trackWidths}">
       <!--OPTIONAL TODO: Implement custom timeline track zoom-->
       <!--TODO: Implement custom drag and drop file upload-->
       <!--OPTIONAL TODO: Implememt custom resizing-->
       <!--OPTIONAL TODO: Implememt custom time bar-->
-      <div id="buttons">
-        <vs-button color="primary" type="filled" icon="add" @click="addTrack" style="float: right">트랙 추가</vs-button>
-        <vs-button color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play" style="float: right"></vs-button>
-      </div>
       <div
-        id="tracks"
         @mouseenter="enter"
         @mouseOut="out"
         @mousemove="hovering">
           <div
-            id="playBar"
+            class="playBar"
             ref="playBar"
             :style="{height: '300px', width: '1px', backgroundColor: 'red', zIndex: 2, position: 'absolute', 'marginLeft': `${current}px`}"
           />
           <div
-            id="previewMouseBar"
+            class="previewMouseBar"
             ref="previewMouseBar"
             :style="{height: '300px', width: '1px', backgroundColor: 'black', zIndex: 1, position: 'absolute', 'marginLeft': `${preview}px`}"
           />
@@ -57,6 +56,16 @@
           @drop="onDrop($event, trackIndex)"
         >
           <div
+            class="playBar"
+            ref="playBar"
+            :style="{height: '300px', width: '1px', backgroundColor: 'red', zIndex: 2, position: 'absolute', 'marginLeft': `${current}px`}"
+          />
+          <div
+            class="previewMouseBar"
+            ref="previewMouseBar"
+            :style="{height: '300px', width: '1px', backgroundColor: 'black', zIndex: 1, position: 'absolute', 'marginLeft': `${preview}px`}"
+          />
+          <div
             v-for="clip in track.clips"
             :key="`clip${clip.id}`"
             class="drag-el"
@@ -68,16 +77,41 @@
           </div>
         </div>
       </div>
-    </div>
+    </simplebar>
   </div>
 </template>
 
 <script>
+import simplebar from 'simplebar-vue';
+import 'simplebar/dist/simplebar.min.css';
 import _ from 'lodash'//eslint-disable-line no-unused-vars
 import gql from 'graphql-tag'
 export default {
+  components: {
+    simplebar
+  },
   mounted: function (){
     setInterval(this.nextFrame, 1000/24)
+    const outer = document.createElement('div');
+    outer.style.visibility = 'hidden';
+    outer.style.overflow = 'scroll'; // forcing scrollbar to appear
+    outer.style.msOverflowStyle = 'scrollbar'; // needed for WinJS apps
+    document.body.appendChild(outer);
+
+    // Creating inner element and placing it in the container
+    const inner = document.createElement('div');
+    outer.appendChild(inner);
+
+    // Calculating difference between container's full width and the child width
+    const scrollbarWidth = (outer.offsetWidth - inner.offsetWidth);
+
+    // Removing temporary elements from the DOM
+    outer.parentNode.removeChild(outer);
+    this.scrollbarWidth = scrollbarWidth
+    console.log(this.scrollbarWidth)
+  },
+  computed: {
+    trackWidths: function () { return `calc(100% - 300px)` }
   },
   apollo: {
     projects: {
@@ -155,6 +189,7 @@ export default {
   data: function(){
     return {
       current: 0,
+      scrollbarWidth: 0,
       preview: 0,
       playing: false,
       mouseIsIn: null,
@@ -372,14 +407,10 @@ export default {
   padding: 5px;
   margin-bottom: 10px;
 }
-#tracks{
-  overflow: scroll;
-  height: 300px;
-  width: calc(100vw - 300px);
-}
 #buttons{
-  width: calc(100vw - 300px);
-  height: 30px;
+  width: 100%;
+  position: absolute;
+  bottom: 300px;
 }
 #timeline{
   position: absolute;
@@ -394,7 +425,7 @@ export default {
   width: 300px;
   background-color: #000000;
   height: 300px;
-  overflow: scroll;
+  /*overflow: scroll;*/
 }
 #editor{
   height: 100vh;
