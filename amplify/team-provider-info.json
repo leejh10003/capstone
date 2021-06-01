@@ -14,6 +14,12 @@
     "categories": {
       "auth": {
         "capstone4bb969ac": {}
+      },
+      "function": {
+        "S3Trigger94c0f26a": {
+          "deploymentBucketName": "amplify-capstone-dev-185420-deployment",
+          "s3Key": "amplify-builds/S3Trigger94c0f26a-736e4e712b674962574f-build.zip"
+        }
       }
     }
   }
