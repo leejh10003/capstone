@@ -2,6 +2,9 @@
   <div v-if="projects === null">
   </div>
   <div v-else id="editor">
+    <vs-alert :title="uploadStatus === 'uploading' ? '업로드 중...' : '완료'" :active="uploadStatus !== null" :color.sync='colorUpload' style="position: absolute; bottom: 30px; right: 30px; width: 300px;z-index: 4;">
+      {{ uploadStatus === 'uploading' ? '파일을 업로드하는 중입니다...' : '업로드가 완료되었습니다!' }}
+    </vs-alert>
     <div style="position: absolute; bottom: 300px;"><vs-button color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play"></vs-button><vs-button color="primary" type="filled" icon="add" @click="addTrack" style="z-index: 1; float:right">트랙 추가</vs-button></div>
     <simplebar data-simplebar-auto-hide="true" id="videos">
         <div
@@ -79,7 +82,7 @@ import simplebar from 'simplebar-vue';
 import 'simplebar/dist/simplebar.min.css';
 import _ from 'lodash'
 import gql from 'graphql-tag'
-import { Storage, Auth } from 'aws-amplify'
+import { Storage, Auth } from 'aws-amplify' //eslint-disable-line no-unused-vars
 export default {
   components: {
     simplebar
@@ -98,7 +101,8 @@ export default {
     this.scrollbarWidth = scrollbarWidth
   },
   computed: {
-    trackWidths: function () { return `calc(100% - 300px)` }
+    trackWidths: function () { return `calc(100% - 300px)` },
+    colorUpload: function () { return this.uploadStatus === 'uploading' ? 'warning' : 'success' }
   },
   apollo: {
     $subscribe: {
@@ -143,6 +147,7 @@ export default {
   },
   data: function(){
     return {
+      uploadStatus: null,
       current: 0,
       scrollbarWidth: 0,
       preview: 0,
@@ -200,26 +205,44 @@ export default {
     },
     dropFile: async function(event) {
       try {
-        if (event.dataTransfer.files.length > 0){
-          const file = event?.dataTransfer?.files?.[0]
-          console.log(file.name)
-          const { data: { insert_videos_one: { id } } } = await this.$apollo.mutate({//eslint-disable-line no-unused-vars
-            variables: {
-              projectId: this.$route.params.id,
-              name: file.name
-            },
-            mutation: gql`mutation ($projectId: bigint!, $name: String!){
-              insert_videos_one(object: {project_id: $projectId, size: 0, filename: $name, exif: ""}) {
-                id
-              }
-            }`
-          })
+        const files = Array.from(event.dataTransfer.files)
+        if (files.length > 0){
           const { username } = await Auth.currentUserInfo()
-          await Storage.put(`${username}/${this.$route.params.id}/${id}/${file.name}`, file, {
-            level: 'public',
-            visibility: 'public',
-            acl: 'public-read'
-          })
+          this.uploadStatus = 'uploading'
+          const tasks = files.map(async function (file) {
+            if (file.type.startsWith('video')){
+              const { data: { insert_videos_one: { id } } } = await this.$apollo.mutate({//eslint-disable-line no-unused-vars
+                variables: {
+                  projectId: this.$route.params.id,
+                  name: file.name
+                },
+                mutation: gql`mutation ($projectId: bigint!, $name: String!){
+                  insert_videos_one(object: {project_id: $projectId, size: 0, filename: $name, exif: ""}) {
+                    id
+                  }
+                }`
+              })
+              const { key } = await Storage.put(`${username}/${this.$route.params.id}/${id}/${file.name}`, file, {
+                level: 'public',
+                visibility: 'public',
+                acl: 'public-read'
+              })
+              await this.$apollo.mutate({
+                variables: {
+                  key,
+                  id
+                },
+                mutation: gql`mutation ($id: bigint!, $key: String!){
+                  update_videos_by_pk(pk_columns: {id: $id}, _set: {filename: $key}){
+                    id
+                  }
+                }`
+              })
+            }
+          }.bind(this))
+          await Promise.all(tasks)
+          this.uploadStatus = 'success'
+          setTimeout((() => {this.uploadStatus = null}).bind(this), 3000)
         }
       } catch (e){
         console.error(e)
