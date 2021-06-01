@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <div id="nav">
+    <!--<div id="nav">
       <router-link to="/">Home</router-link> |
       <router-link to="/about">About</router-link> |
       <router-link to="/register">Register</router-link> |
@@ -11,7 +11,7 @@
       <router-link to="/layout">Layout</router-link> |
       <router-link to="/drag">Drag</router-link> |
       <button @click="logout">Logout</button>
-    </div>
+    </div>-->
     <router-view/>
   </div>
 </template>
