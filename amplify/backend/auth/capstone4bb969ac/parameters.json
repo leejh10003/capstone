@@ -1,6 +1,6 @@
 {
     "identityPoolName": "capstone4bb969ac_identitypool_4bb969ac",
-    "allowUnauthenticatedIdentities": false,
+    "allowUnauthenticatedIdentities": true,
     "resourceNameTruncated": "capsto4bb969ac",
     "userPoolName": "capstone4bb969ac_userpool_4bb969ac",
     "autoVerifiedAttributes": [
