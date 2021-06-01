@@ -79,6 +79,7 @@ import simplebar from 'simplebar-vue';
 import 'simplebar/dist/simplebar.min.css';
 import _ from 'lodash'
 import gql from 'graphql-tag'
+import { Storage, Auth } from 'aws-amplify'
 export default {
   components: {
     simplebar
@@ -198,20 +199,30 @@ export default {
       }
     },
     dropFile: async function(event) {
-      if (event.dataTransfer.files.length > 0){
-        const { name } = event?.dataTransfer?.files?.[0]
-        const { data: { insert_videos_one: { id } } } = await this.$apollo.mutate({//eslint-disable-line no-unused-vars
-          variables: {
-            projectId: this.$route.params.id,
-            name
-          },
-          optimisticResponse: {},
-          mutation: gql`mutation ($projectId: bigint!, $name: String!){
-            insert_videos_one(object: {project_id: $projectId, size: 0, filename: $name, exif: ""}) {
-              id
-            }
-          }`
-        })
+      try {
+        if (event.dataTransfer.files.length > 0){
+          const file = event?.dataTransfer?.files?.[0]
+          console.log(file.name)
+          const { data: { insert_videos_one: { id } } } = await this.$apollo.mutate({//eslint-disable-line no-unused-vars
+            variables: {
+              projectId: this.$route.params.id,
+              name: file.name
+            },
+            mutation: gql`mutation ($projectId: bigint!, $name: String!){
+              insert_videos_one(object: {project_id: $projectId, size: 0, filename: $name, exif: ""}) {
+                id
+              }
+            }`
+          })
+          const { username } = await Auth.currentUserInfo()
+          await Storage.put(`${username}/${this.$route.params.id}/${id}/${file.name}`, file, {
+            level: 'public',
+            visibility: 'public',
+            acl: 'public-read'
+          })
+        }
+      } catch (e){
+        console.error(e)
       }
       //TODO: upload real file
     },
