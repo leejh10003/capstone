@@ -5,7 +5,11 @@
     <vs-alert :title="uploadStatus === 'uploading' ? '업로드 중...' : '완료'" :active="uploadStatus !== null" :color.sync='colorUpload' style="position: absolute; bottom: 30px; right: 30px; width: 300px;z-index: 4;">
       {{ uploadStatus === 'uploading' ? '파일을 업로드하는 중입니다...' : '업로드가 완료되었습니다!' }}
     </vs-alert>
-    <div style="position: absolute; bottom: 300px;"><vs-button color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play"></vs-button><vs-button color="primary" type="filled" icon="add" @click="addTrack" style="z-index: 1; float:right">트랙 추가</vs-button></div>
+    <div style="position: absolute; bottom: 300px;">
+      <vs-button color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play" />
+      <vs-button color="primary" type="filled" icon="add" @click="addTrack" style="z-index: 1; float:right">트랙 추가</vs-button>
+      <vs-button color="primary" type="filled" icon="add" @click="split" style="z-index: 1;"/>
+    </div>
     <simplebar data-simplebar-auto-hide="true" id="videos">
         <div
           v-for="(row, rowIndex) in splitThree(projects[0].videos)"
@@ -29,8 +33,11 @@
     </simplebar>
     <simplebar data-simplebar-auto-hide="true" id="timeline" :style="{height: '300px', width: trackWidths}">
       <div
+        @click="setCurrent"
         @mouseenter="enter"
         @mouseOut="out"
+        :ref="'timeline'"
+        style="min-height: 300px"
         @mousemove="hovering">
           <div
             class="playBar"
@@ -65,7 +72,7 @@
             v-for="clip in track.clips"
             :key="`clip${clip.id}`"
             class="drag-el"
-            :style="{ position: 'absolute', left: `${clip.track_offset_time}px`, width: `${(clip.played_time)}px`, textAlign: 'start', padding: '0px', height: '32px' }"
+            :style="{ position: 'absolute', left: `${clip.track_offset_time * 24}px`, width: `${(clip.played_time * 24)}px`, textAlign: 'start', padding: '0px', height: '32px' }"
             :ref="`clip${clip.id}`"
             draggable="true"
             @dragstart="startDrag($event, clip, track.id, 'fromTrack')">
@@ -158,6 +165,15 @@ export default {
     }
   },
   methods: {
+    split: function(){
+      const tracks = this.projects[0].tracks.map((track) => track.clips.map((clip) => ({
+        track_id: track.id,
+        id: clip.id,
+        start_time: clip.track_offset_time,
+        end_time: clip.track_offset_time + clip.played_time
+      })).sort((former, latter) => former.start_time - latter.start_time))
+      console.log(tracks)
+    },
     play: function(){
       this.playing = !this.playing
     },
@@ -211,13 +227,27 @@ export default {
           this.uploadStatus = 'uploading'
           const tasks = files.map(async function (file) {
             if (file.type.startsWith('video')){
+              const duration = await new Promise((resolve, reject) => {//eslint-disable-line no-unused-vars
+                var video = document.createElement('video');
+                video.preload = 'metadata';
+                video.onloadedmetadata = function() {
+                  window.URL.revokeObjectURL(video.src);
+                  var duration = video.duration;
+                  video.remove()
+                  resolve(duration)
+                }
+                video.src = URL.createObjectURL(file);
+              })
               const { data: { insert_videos_one: { id } } } = await this.$apollo.mutate({//eslint-disable-line no-unused-vars
                 variables: {
                   projectId: this.$route.params.id,
-                  name: file.name
+                  name: file.name,
+                  exif: {
+                    duration
+                  }
                 },
-                mutation: gql`mutation ($projectId: bigint!, $name: String!){
-                  insert_videos_one(object: {project_id: $projectId, size: 0, filename: $name, exif: ""}) {
+                mutation: gql`mutation ($projectId: bigint!, $name: String!, $exif: jsonb!){
+                  insert_videos_one(object: {project_id: $projectId, size: 0, filename: $name, exif: $exif}) {
                     id
                   }
                 }`
@@ -233,7 +263,7 @@ export default {
                   id
                 },
                 mutation: gql`mutation ($id: bigint!, $key: String!){
-                  update_videos_by_pk(pk_columns: {id: $id}, _set: {filename: $key}){
+                  update_videos_by_pk(pk_columns: {id: $id}, _set: {key: $key}){
                     id
                   }
                 }`
@@ -255,6 +285,10 @@ export default {
         arr.push(input.slice(i, Math.min(i + 3, input.length)))
       }
       return arr
+    },
+    setCurrent(event){
+      const xOffset = this.$refs['timeline'].getClientRects()[0].x
+      this.current = event.clientX - xOffset
     },
     addTrack: async function(){
       const id = (this.projects[0].tracks?.reduce((prev, next) => Math.max(prev, next.id), 0) ?? 0) + 1
@@ -283,13 +317,13 @@ export default {
         const toTrack = this.projects[0].tracks.filter((track) => track.id === toward)[0]
         toTrack.clips.push({
           ...clip,
-          track_offset_time: event.clientX -  xOffset - trackPixelInfo[0].x
+          track_offset_time: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24
         })
         await this.$apollo.mutate({
           variables: {
             trackId: toward,
             clipId,
-            trackOffset: event.clientX -  xOffset - trackPixelInfo[0].x
+            trackOffset: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24
           },
           mutation: gql`mutation ($clipId: bigint!, $trackId: bigint!, $trackOffset: float8!){
             update_clips_by_pk(pk_columns: {id: $clipId}, _set: {track_id: $trackId, track_offset_time: $trackOffset}){
