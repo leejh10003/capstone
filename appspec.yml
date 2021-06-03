@@ -1,0 +1,14 @@
+version: 0.0
+os: linux
+files:
+  - source: ./frontend.zip
+    destination: /home/ubuntu/
+hooks:
+  BeforeInstall: 
+    - location: ./before.sh
+      timeout: 300
+      runas: ubuntu
+  AfterInstall:
+    - location: ./build.sh
+      timeout: 300
+      runas: ubuntu

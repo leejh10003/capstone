@@ -1,0 +1,21 @@
+version: 0.2
+run-as: root
+phases:
+  build:
+    run-as: root
+    on-failure: ABORT
+    commands:
+      - cd ${CODEBUILD_SRC_DIR}
+      - mv appspec.yml /
+      - mv build.sh /
+      - mv before.sh /
+    finally:
+      - zip -r /frontend.zip ./*
+artifacts:
+  files:
+    - /frontend.zip
+    - /appspec.yml
+    - /build.sh
+    - /before.sh
+  name: artifact-name
+  exclude-paths: true
