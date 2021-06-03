@@ -44,11 +44,6 @@
             ref="playBar"
             :style="{height: '300px', width: '1px', backgroundColor: 'red', zIndex: 2, position: 'absolute', 'marginLeft': `${current}px`}"
           />
-          <div
-            class="previewMouseBar"
-            ref="previewMouseBar"
-            :style="{height: '300px', width: '1px', backgroundColor: 'black', zIndex: 1, position: 'absolute', 'marginLeft': `${preview}px`}"
-          />
         <div class="drop-zone"
           v-for="track in projects[0].tracks"
           :key="`track${track.id}`"
@@ -62,11 +57,6 @@
             class="playBar"
             ref="playBar"
             :style="{height: '300px', width: '1px', backgroundColor: 'red', zIndex: 2, position: 'absolute', 'marginLeft': `${current}px`}"
-          />
-          <div
-            class="previewMouseBar"
-            ref="previewMouseBar"
-            :style="{height: '300px', width: '1px', backgroundColor: 'black', zIndex: 1, position: 'absolute', 'marginLeft': `${preview}px`}"
           />
           <div
             v-for="clip in track.clips"
@@ -166,12 +156,15 @@ export default {
   },
   methods: {
     split: function(){
-      const tracks = this.projects[0].tracks.map((track) => track.clips.map((clip) => ({
-        track_id: track.id,
-        id: clip.id,
-        start_time: clip.track_offset_time,
-        end_time: clip.track_offset_time + clip.played_time
-      })).sort((former, latter) => former.start_time - latter.start_time))
+      const tracks = this.projects[0].tracks.map((track) => ({
+        ...track,
+        clips: track.clips.map((clip) => ({
+          ...clip,
+          start_time: clip.track_offset_time,
+          end_time: clip.track_offset_time + clip.played_time,
+          played_time: clip.played_time
+        }))
+      }))
       console.log(tracks)
     },
     play: function(){
@@ -214,6 +207,7 @@ export default {
         event.dataTransfer.setData('from', from)
         break
         case 'fromVideos':
+        event.dataTransfer.setData('duration', item?.exif?.duration)
         event.dataTransfer.dropEffect = 'clone'
         event.dataTransfer.evvectAllowed = 'clone'
         event.dataTransfer.setData('videoId', item.id)
@@ -277,7 +271,6 @@ export default {
       } catch (e){
         console.error(e)
       }
-      //TODO: upload real file
     },
     splitThree: function(input){
       const arr = []
@@ -306,51 +299,150 @@ export default {
     },
     onDrop: async function (event, toward) {
       const kind = event.dataTransfer.getData('kind')
+      const xOffset = parseInt(event.dataTransfer.getData('xOffset'))
       if(kind === 'fromTrack'){
         const clipId = parseInt(event.dataTransfer.getData('clipId'))
-        const xOffset = parseInt(event.dataTransfer.getData('xOffset'))
         const from = parseInt(event.dataTransfer.getData('from'))
         const trackPixelInfo = this.$refs[`track${toward}`][0].getClientRects()
         const clip = _.cloneDeep(this.projects[0].tracks.filter((track) => track.id === from)[0].clips.filter((clip) => clip.id === clipId)[0])
         const fromTrack = this.projects[0].tracks.filter((track) => track.id === from)[0]
         fromTrack.clips = fromTrack.clips.filter((clip) => clip.id !== clipId)
         const toTrack = this.projects[0].tracks.filter((track) => track.id === toward)[0]
-        toTrack.clips.push({
-          ...clip,
-          track_offset_time: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24
+        const mappedTrackClip = toTrack.clips.map((clip) => ({
+          id: clip.id,
+          start_time: clip.track_offset_time,
+          end_time: clip.track_offset_time + clip.played_time,
+          played_time: clip.played_time
+        }))
+        const overlappedWithMoved = mappedTrackClip.filter((candidate) => {
+          return candidate.start_time * 24>= (event.clientX -  xOffset - trackPixelInfo[0].x) &&
+            candidate.start_time * 24 <= (event.clientX -  xOffset - trackPixelInfo[0].x) + clip.played_time * 24 ||
+            candidate.end_time * 24 >= (event.clientX -  xOffset - trackPixelInfo[0].x) &&
+            candidate.end_time * 24 <= (event.clientX -  xOffset - trackPixelInfo[0].x) + clip.played_time * 24
         })
-        await this.$apollo.mutate({
-          variables: {
-            trackId: toward,
-            clipId,
-            trackOffset: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24
-          },
-          mutation: gql`mutation ($clipId: bigint!, $trackId: bigint!, $trackOffset: float8!){
-            update_clips_by_pk(pk_columns: {id: $clipId}, _set: {track_id: $trackId, track_offset_time: $trackOffset}){
-              id
+        if (overlappedWithMoved.length > 0){
+          const initial = overlappedWithMoved.reduce((prev, current) => prev.start_time < current.start_time ? prev : current)
+          const timingPadding = ((event.clientX -  xOffset - trackPixelInfo[0].x) + clip.played_time * 24 - initial.start_time * 24) / 24
+          toTrack.clips.forEach((clip) => {
+            if (clip.track_offset_time >= initial.start_time){
+              clip.track_offset_time += timingPadding
             }
-          }`
-        })
+          })
+          const ids = toTrack.clips.filter((clip) => clip.track_offset_time >= initial.start_time).map((clip) => clip.id)
+          toTrack.clips.push({
+            ...clip,
+            track_offset_time: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24
+          })
+          await this.$apollo.mutate({
+            variables: {
+              ids,
+              timingPadding,
+              toward,
+              clipId,
+              trackOffset: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24
+            },
+            mutation: gql`mutation ($ids: [bigint!]!, $timingPadding: float8!, $clipId: bigint!, $toward: bigint!, $trackOffset: float8!){
+              update_clips_by_pk(pk_columns: {id: $clipId}, _set: {track_id: $toward, track_offset_time: $trackOffset}){
+                id
+              }
+              update_clips(where: {id: {_in: $ids}}, _inc: {track_offset_time: $timingPadding}){
+                returning{
+                  id
+                }
+              }
+            }`
+          })
+        } else {
+          toTrack.clips.push({
+            ...clip,
+            track_offset_time: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24
+          })
+          await this.$apollo.mutate({
+            variables: {
+              trackId: toward,
+              clipId,
+              trackOffset: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24
+            },
+            mutation: gql`mutation ($clipId: bigint!, $trackId: bigint!, $trackOffset: float8!){
+              update_clips_by_pk(pk_columns: {id: $clipId}, _set: {track_id: $trackId, track_offset_time: $trackOffset}){
+                id
+              }
+            }`
+          })
+        }
       } else if (kind === 'fromVideos'){
         const videoId = parseInt(event.dataTransfer.getData('videoId'))
-        const xOffset = parseInt(event.dataTransfer.getData('xOffset'))
+        const duration = event.dataTransfer.getData('duration')
         const allClips = this.projects[0].tracks.reduce((prev, next) => next.clips ? prev.concat(next.clips) : prev, [])
         const id = (allClips.reduce((prev, next) => prev ? Math.max(prev, next.id) : next.id, 0) ?? -1) + 1
         const trackPixelInfo = this.$refs[`track${toward}`][0].getClientRects()
         const toTrack = this.projects[0].tracks.filter((track) => track.id === toward)[0]
-        toTrack.clips.push({
-          played_time: 30,
-          track_id: toward,
-          video_id: videoId,
-          id,
-          track_offset_time: event.clientX -  xOffset - trackPixelInfo[0].x
+        //ADDED
+        const mappedTrackClip = toTrack.clips.map((clip) => ({
+          id: clip.id,
+          start_time: clip.track_offset_time,
+          end_time: clip.track_offset_time + clip.played_time,
+          played_time: clip.played_time
+        }))
+        const overlappedWithMoved = mappedTrackClip.filter((candidate) => {
+          return candidate.start_time * 24>= (event.clientX -  xOffset - trackPixelInfo[0].x) &&
+            candidate.start_time * 24 <= (event.clientX -  xOffset - trackPixelInfo[0].x) + duration * 24 ||
+            candidate.end_time * 24 >= (event.clientX -  xOffset - trackPixelInfo[0].x) &&
+            candidate.end_time * 24 <= (event.clientX -  xOffset - trackPixelInfo[0].x) + duration * 24
         })
-        await this.$apollo.mutate({
+        if (overlappedWithMoved.length > 0){
+          const initial = overlappedWithMoved.reduce((prev, current) => prev.start_time < current.start_time ? prev : current)
+          const timingPadding = ((event.clientX -  xOffset - trackPixelInfo[0].x) + duration * 24 - initial.start_time * 24) / 24
+          toTrack.clips.forEach((clip) => {
+            if (clip.track_offset_time >= initial.start_time){
+              clip.track_offset_time += timingPadding
+            }
+          })
+          const ids = toTrack.clips.filter((clip) => clip.track_offset_time >= initial.start_time).map((clip) => clip.id)
+          toTrack.clips.push({
+            played_time: duration,
+            track_id: toward,
+            video_id: videoId,
+            id,
+            track_offset_time: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24
+          })
+          await this.$apollo.mutate({
+            variables: {
+              ids,
+              timingPadding,
+              object: {
+                played_time: duration,
+                track_id: toward,
+                track_offset_time: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24,
+                video_id: videoId,
+                video_offset_time: 0
+              }
+            },
+            mutation: gql`mutation ($ids: [bigint!]!, $timingPadding: float8!, $object:clips_insert_input!){
+              update_clips(where: {id: {_in: $ids}}, _inc: {track_offset_time: $timingPadding}){
+                returning{
+                  id
+                }
+              }
+              insert_clips_one(object: $object) {
+                id
+              }
+            }`
+          })
+        } else {
+          toTrack.clips.push({
+            played_time: duration,
+            track_id: toward,
+            video_id: videoId,
+            id,
+            track_offset_time: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24
+          })
+          await this.$apollo.mutate({
           variables: {
             object: {
-              played_time: 30,
+              played_time: duration,
               track_id: toward,
-              track_offset_time: event.clientX -  xOffset - trackPixelInfo[0].x,
+              track_offset_time: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24,
               video_id: videoId,
               video_offset_time: 0
             }
@@ -361,6 +453,7 @@ export default {
             }
           }`
         })
+        }
       }
     }
   },
