@@ -156,9 +156,9 @@ export default {
     }
   },
   methods: {
-    split: function(){
-      const toSplit = this.projects[0].tracks.map((track) => ({
-        clips: track.clips.map((clip) => ({
+    split: async function(){
+      const toSplit = this.projects[0].tracks.map((track, track_index) => ({
+        clips: track.clips.map((clip, clip_index) => ({
           id: clip.id,
           video_id: clip.video.id,
           track_id: track.id,
@@ -166,24 +166,86 @@ export default {
           start_time: clip.track_offset_time,
           end_time: clip.track_offset_time + clip.played_time,
           played_time: clip.played_time,
-          effect: clip.effect
+          effect: clip.effect,
+          clip_index,
+          track_index
         }))
       })).reduce((prev, current) => prev.concat(current.clips), []).filter((clip) => clip.start_time < this.current / 24 && clip.end_time > this.current / 24)
-      const both = toSplit.map((clip) => ({
-        current: {
-          ...clip,
-          played_time: this.current / 24 - clip.start_time
-        },
-        new: {
-          start_time: this.current / 24,
-          played_time: clip.end_time - this.current / 24,
-          video_offset_time: clip.video_offset_time + (this.current / 24 - clip.start_time),
-          track_id: clip.track_id,
-          video_id: clip.video_id,
-          effect: clip.effect
-        },
-      }))
-      console.log(both)
+      var clipsMaxId = this.projects[0].tracks.map((track) => track.clips).reduce((prev, next) => prev.concat(next), []).reduce((prev, next) => Math.max(prev, next.id), 0) + 1
+      const both = toSplit.map((clip) => {
+        const current = {...clip}
+        current.played_time = this.current / 24 - clip.start_time
+        current.track_id = clip.track_id
+        current.video_id = clip.video_id
+        current.effect = clip.effect
+        const newClip = {...clip}
+        newClip.start_time = this.current / 24
+        newClip.played_time = clip.start_time + clip.played_time - this.current / 24
+        newClip.video_offset_time = clip.video_offset_time + (this.current / 24 - clip.start_time)
+        newClip.track_id = clip.track_id
+        newClip.video_id = clip.video_id
+        newClip.effect = clip.effect
+        newClip.id = clipsMaxId++
+        return {
+          current,
+          new: newClip,
+        }
+      })
+      const serverVariables = both.map((entity, index) => {
+        const variables = {}
+        variables[`id${index}`] = entity.current.id
+        variables[`playedTime${index}`] = entity.current.played_time
+        return {
+          new: {
+            video_offset_time: entity.new.video_offset_time,
+            track_offset_time: entity.new.start_time,
+            played_time: entity.new.played_time,
+            track_id: entity.new.track_id,
+            video_id: entity.new.video_id,
+            effect: entity.new.effect
+          },
+          old: {
+            arguments: `$id${index}: bigint!, $playedTime${index}: float8!`,
+            variables,
+            query: `update_clip_${index}: update_clips(where: {id:{_eq: $id${index}}}, _set: {played_time: $playedTime${index}}){
+              returning{
+                id
+              }
+            }`
+          }
+        }
+      })
+      const mutation = gql`mutation($objects:[clips_insert_input!]!, ${serverVariables.map((entity) => entity.old.arguments).join(', ')}){
+        insert_clips(objects: $objects){
+          returning{
+            id
+          }
+        }
+        ${serverVariables.map((entity) => entity.old.query).join('\n')}
+      }`
+      const variables = {
+        objects: serverVariables.map((entity) => entity.new),
+        ...(serverVariables.map((entity) => entity.old.variables).reduce((prev, current) => Object.assign(current, prev)))
+      }
+      both.forEach((clip) => {
+        this.projects[0].tracks[clip.current.track_index].clips[clip.clip_index] = {
+          ...this.projects[0].tracks[clip.current.track_index].clips[clip.current.clip_index],
+          palyed_time: clip.current.played_time
+        }
+
+        const newClip = {
+          ...this.projects[0].tracks[clip.new.track_index].clips[clip.new.clip_index],
+        }
+        newClip.track_offset_time = clip.new.start_time
+        newClip.video_offset_time = clip.new.video_offset_time
+        newClip.played_time = clip.new.played_time
+        newClip.id = clip.new.id
+        this.projects[0].tracks[clip.new.track_index].clips.push(newClip)
+      })
+      await this.$apollo.mutate({
+        mutation,
+        variables
+      })
     },
     play: function(){
       this.playing = !this.playing
