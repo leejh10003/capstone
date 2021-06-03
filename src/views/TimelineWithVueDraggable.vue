@@ -5,6 +5,9 @@
     <vs-alert :title="uploadStatus === 'uploading' ? '업로드 중...' : '완료'" :active="uploadStatus !== null" :color.sync='colorUpload' style="position: absolute; bottom: 30px; right: 30px; width: 300px;z-index: 4;">
       {{ uploadStatus === 'uploading' ? '파일을 업로드하는 중입니다...' : '업로드가 완료되었습니다!' }}
     </vs-alert>
+    <div id="canvas-parent" class="grid-item" style="display: inline">
+      <span style="display: inline">GPU.js Graphical Output <span id="fps-number">0</span><span> fps</span></span><br/>
+    </div>
     <div style="position: absolute; bottom: 300px;">
       <vs-button color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play" />
       <vs-button color="primary" type="filled" icon="add" @click="addTrack" style="z-index: 1; float:right">트랙 추가</vs-button>
