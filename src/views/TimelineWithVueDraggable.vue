@@ -123,6 +123,7 @@ export default {
               clips {
                 effect
                 id
+                video_offset_time
                 track_offset_time
                 played_time
                 video {
@@ -156,16 +157,33 @@ export default {
   },
   methods: {
     split: function(){
-      const tracks = this.projects[0].tracks.map((track) => ({
-        ...track,
+      const toSplit = this.projects[0].tracks.map((track) => ({
         clips: track.clips.map((clip) => ({
-          ...clip,
+          id: clip.id,
+          video_id: clip.video.id,
+          track_id: track.id,
+          video_offset_time: clip.video_offset_time,
           start_time: clip.track_offset_time,
           end_time: clip.track_offset_time + clip.played_time,
-          played_time: clip.played_time
+          played_time: clip.played_time,
+          effect: clip.effect
         }))
+      })).reduce((prev, current) => prev.concat(current.clips), []).filter((clip) => clip.start_time < this.current / 24 && clip.end_time > this.current / 24)
+      const both = toSplit.map((clip) => ({
+        current: {
+          ...clip,
+          played_time: this.current / 24 - clip.start_time
+        },
+        new: {
+          start_time: this.current / 24,
+          played_time: clip.end_time - this.current / 24,
+          video_offset_time: clip.video_offset_time + (this.current / 24 - clip.start_time),
+          track_id: clip.track_id,
+          video_id: clip.video_id,
+          effect: clip.effect
+        },
       }))
-      console.log(tracks)
+      console.log(both)
     },
     play: function(){
       this.playing = !this.playing
