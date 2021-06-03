@@ -8,27 +8,20 @@
     <div style="position: absolute; bottom: 300px;">
       <vs-button color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play" />
       <vs-button color="primary" type="filled" icon="add" @click="addTrack" style="z-index: 1; float:right">트랙 추가</vs-button>
-      <vs-button color="primary" type="filled" icon="add" @click="split" style="z-index: 1;"/>
+      <vs-button color="primary" type="filled" icon="vertical_split" @click="split" style="z-index: 1;"/>
     </div>
     <simplebar data-simplebar-auto-hide="true" id="videos">
         <div
-          v-for="(row, rowIndex) in splitThree(projects[0].videos)"
-          :key="`row${rowIndex}`"
+          v-for="(video, videoIndex) in projects[0].videos"
+          :key="`video${videoIndex}`"
           @dragover.prevent
           @dragenter.prevent
           @drop.prevent="dropFile"
-          class="row">
-          <div
-            class="video"
-            v-for="video in row"
-            :key="`video${video.id}`"
-            :ref="`video${video.id}`"
-            draggable="true"
-            @dragstart="startDrag($event, video, null, 'fromVideos')"
-          >
-          {{video.id}}
+          @dragstart="startDrag($event, video, null, 'fromVideos')"
+          :ref="`video${video.id}`"
+          draggable="true"
+          class="video">
           {{video.filename}}
-          </div>
         </div>
     </simplebar>
     <simplebar data-simplebar-auto-hide="true" id="timeline" :style="{height: '300px', width: trackWidths}">
@@ -67,6 +60,7 @@
             draggable="true"
             @dragstart="startDrag($event, clip, track.id, 'fromTrack')">
             <span style="sgyle: 2px; margin: 0px; padding: 0px; font-size: 10px;">{{ clip.id }}</span>
+            <video :ref="`clipVideo${clip.id}`" :src="`https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${clip.video.key.replaceAll(' ', '+')}`" controls width="1920" style="display: none"/>
           </div>
         </div>
       </div>
@@ -130,6 +124,7 @@ export default {
                   id
                   exif
                   filename
+                  key
                   size
                 }
               }
@@ -579,10 +574,14 @@ export default {
   position: relative;
 }
 .video{
-  width: 80px;
+  width: 280px;
   margin: 10px;
   height: 80px;
   color: white;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 5px;
   background-color: red;
 }
 .row{
