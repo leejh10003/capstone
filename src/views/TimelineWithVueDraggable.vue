@@ -1,79 +1,80 @@
 <template>
-  <div v-if="projects === null">
-  </div>
-  <div v-else id="editor">
+  <div>
     <vs-alert :title="uploadStatus === 'uploading' ? '업로드 중...' : '완료'" :active="uploadStatus !== null" :color.sync='colorUpload' style="position: absolute; bottom: 30px; right: 30px; width: 300px;z-index: 4;">
       {{ uploadStatus === 'uploading' ? '파일을 업로드하는 중입니다...' : '업로드가 완료되었습니다!' }}
     </vs-alert>
-    <div id="canvas-parent" class="grid-item" style="display: inline">
+    <div id="canvas-parent" ref="canvas-parent" class="grid-item" style="display: inline">
       <span style="display: inline">GPU.js Graphical Output <span id="fps-number">0</span><span> fps</span></span><br/>
     </div>
-    <div style="position: absolute; bottom: 300px;">
-      <vs-button color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play" />
-      <vs-button color="primary" type="filled" icon="add" @click="addTrack" style="z-index: 1; float:right">트랙 추가</vs-button>
-      <vs-button color="primary" type="filled" icon="vertical_split" @click="split" style="z-index: 1;"/>
-    </div>
-    <simplebar data-simplebar-auto-hide="true" id="videos">
-        <div
-          v-for="(video, videoIndex) in projects[0].videos"
-          :key="`video${videoIndex}`"
-          @dragover.prevent
-          @dragenter.prevent
-          @drop.prevent="dropFile"
-          @dragstart="startDrag($event, video, null, 'fromVideos')"
-          :ref="`video${video.id}`"
-          draggable="true"
-          class="video">
-          {{video.filename}}
-        </div>
-    </simplebar>
-    <simplebar data-simplebar-auto-hide="true" id="timeline" :style="{height: '300px', width: trackWidths}">
-      <div
-        @click="setCurrent"
-        @mouseenter="enter"
-        @mouseOut="out"
-        :ref="'timeline'"
-        style="min-height: 300px"
-        @mousemove="hovering">
+    <div v-if="projects != null" id="editor">
+      <div style="position: absolute; bottom: 300px;">
+        <vs-button color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play" />
+        <vs-button color="primary" type="filled" icon="add" @click="addTrack" style="z-index: 1; float:right">트랙 추가</vs-button>
+        <vs-button color="primary" type="filled" icon="vertical_split" @click="split" style="z-index: 1;"/>
+      </div>
+      <simplebar data-simplebar-auto-hide="true" id="videos">
           <div
-            class="playBar"
-            ref="playBar"
-            :style="{height: '300px', width: '1px', backgroundColor: 'red', zIndex: 2, position: 'absolute', 'marginLeft': `${current}px`}"
-          />
-        <div class="drop-zone"
-          v-for="track in projects[0].tracks"
-          :key="`track${track.id}`"
-          :ref="`track${track.id}`"
-          :style="{ position: 'relative' }"
-          @dragenter.prevent
-          @dragover.prevent
-          @drop="onDrop($event, track.id)"
-        >
-          <div
-            class="playBar"
-            ref="playBar"
-            :style="{height: '300px', width: '1px', backgroundColor: 'red', zIndex: 2, position: 'absolute', 'marginLeft': `${current}px`}"
-          />
-          <div
-            v-for="clip in track.clips"
-            :key="`clip${clip.id}`"
-            class="drag-el"
-            :style="{ position: 'absolute', left: `${clip.track_offset_time * 24}px`, width: `${(clip.played_time * 24)}px`, textAlign: 'start', padding: '0px', height: '32px' }"
-            :ref="`clip${clip.id}`"
+            v-for="(video, videoIndex) in projects[0].videos"
+            :key="`video${videoIndex}`"
+            @dragover.prevent
+            @dragenter.prevent
+            @drop.prevent="dropFile"
+            @dragstart="startDrag($event, video, null, 'fromVideos')"
+            :ref="`video${video.id}`"
             draggable="true"
-            @dragstart="startDrag($event, clip, track.id, 'fromTrack')">
-            <span style="sgyle: 2px; margin: 0px; padding: 0px; font-size: 10px;">{{ clip.id }}</span>
-            <video :ref="`clipVideo${clip.id}`" :src="`https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${clip.video.key.replaceAll(' ', '+')}`" controls width="1920" style="display: none"/>
+            class="video">
+            {{video.filename}}
+          </div>
+      </simplebar>
+      <simplebar data-simplebar-auto-hide="true" id="timeline" :style="{height: '300px', width: trackWidths}">
+        <div
+          @click="setCurrent"
+          @mouseenter="enter"
+          @mouseOut="out"
+          :ref="'timeline'"
+          style="min-height: 300px"
+          @mousemove="hovering">
+            <div
+              class="playBar"
+              ref="playBar"
+              :style="{height: '300px', width: '1px', backgroundColor: 'red', zIndex: 2, position: 'absolute', 'marginLeft': `${current}px`}"
+            />
+          <div class="drop-zone"
+            v-for="track in projects[0].tracks"
+            :key="`track${track.id}`"
+            :ref="`track${track.id}`"
+            :style="{ position: 'relative' }"
+            @dragenter.prevent
+            @dragover.prevent
+            @drop="onDrop($event, track.id)"
+          >
+            <div
+              class="playBar"
+              ref="playBar"
+              :style="{height: '300px', width: '1px', backgroundColor: 'red', zIndex: 2, position: 'absolute', 'marginLeft': `${current}px`}"
+            />
+            <div
+              v-for="clip in track.clips"
+              :key="`clip${clip.id}`"
+              class="drag-el"
+              :style="{ position: 'absolute', left: `${clip.track_offset_time * 24}px`, width: `${(clip.played_time * 24)}px`, textAlign: 'start', padding: '0px', height: '32px' }"
+              :ref="`clip${clip.id}`"
+              draggable="true"
+              @dragstart="startDrag($event, clip, track.id, 'fromTrack')">
+              <span style="sgyle: 2px; margin: 0px; padding: 0px; font-size: 10px;">{{ clip.id }}</span>
+              <video :ref="`clipVideo${clip.id}`" :src="`https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${clip.video.key.replaceAll(' ', '+')}`" controls width="1920" style="display: none"/>
+            </div>
           </div>
         </div>
-      </div>
-    </simplebar>
+      </simplebar>
+    </div>
   </div>
 </template>
 
 <script>
 import simplebar from 'simplebar-vue';
 import 'simplebar/dist/simplebar.min.css';
+import { GPU } from 'gpu.js'
 import _ from 'lodash'
 import gql from 'graphql-tag'
 import { Storage, Auth } from 'aws-amplify' //eslint-disable-line no-unused-vars
@@ -93,6 +94,23 @@ export default {
     const scrollbarWidth = (outer.offsetWidth - inner.offsetWidth);
     outer.parentNode.removeChild(outer);
     this.scrollbarWidth = scrollbarWidth
+    this.kernel = this.gpu.createKernel(function(frame, flipXY, alterColors) {
+      const pixel = flipXY
+        ? frame[this.output.y - 1 - this.thread.y][this.output.x - 1 - this.thread.x]
+        : frame[this.thread.y][this.thread.x]
+    
+      if (alterColors) {
+        this.color(pixel.b, pixel.g, pixel.r, pixel.a)
+      } else {
+        this.color(pixel.r, pixel.g, pixel.b, pixel.a)
+      }
+    }, {
+      output: [337, 599],
+      graphical: true,
+      tactic: 'precision'
+    })
+    const canvasParent = this.$refs['canvas-parent']
+    canvasParent.appendChild(this.kernel.canvas)
   },
   computed: {
     trackWidths: function () { return `calc(100% - 300px)` },
@@ -144,6 +162,14 @@ export default {
   data: function(){
     return {
       uploadStatus: null,
+      gpu: new GPU({mode: 'gpu'}),
+      kernel: null,
+      disposed: false,
+      pauseGPU: false,
+      lastCalledTime: Date.now(),
+      flipXY: false,
+      alterColors: false,
+      destroy: false,
       current: 0,
       scrollbarWidth: 0,
       preview: 0,
@@ -154,6 +180,17 @@ export default {
     }
   },
   methods: {
+    render: function () {
+      if (this.disposed){
+        return
+      }
+      if (this.pauseGPU){
+        return setTimeout(this.render, 100)
+      }
+      this.kernel(this.videoElement, this.flipXY, this.alterColors)
+      window.requestAnimationFrame(this.render)
+      this.calcFPS()
+    },
     split: async function(){
       const toSplit = this.projects[0].tracks.map((track, track_index) => ({
         clips: track.clips.map((clip, clip_index) => ({
