@@ -1,5 +1,6 @@
 <template>
   <div>
+    <video ref='nullvideo' width="480" height="270" style="display: none"/>
     <vs-alert :title="uploadStatus === 'uploading' ? '업로드 중...' : '완료'" :active="uploadStatus !== null" :color.sync='colorUpload' style="position: absolute; bottom: 30px; right: 30px; width: 300px;z-index: 4;">
       {{ uploadStatus === 'uploading' ? '파일을 업로드하는 중입니다...' : '업로드가 완료되었습니다!' }}
     </vs-alert>
@@ -53,6 +54,7 @@
               ref="playBar"
               :style="{height: '300px', width: '1px', backgroundColor: 'red', zIndex: 2, position: 'absolute', 'marginLeft': `${current}px`}"
             />
+            <video :ref="`trackVideoPlayer${track.id}`" controls width="480" height="270" style="display: none"/>
             <div
               v-for="clip in track.clips"
               :key="`clip${clip.id}`"
@@ -62,7 +64,6 @@
               draggable="true"
               @dragstart="startDrag($event, clip, track.id, 'fromTrack')">
               <span style="sgyle: 2px; margin: 0px; padding: 0px; font-size: 10px;">{{ clip.id }}</span>
-              <video :ref="`clipVideo${clip.id}`" :src="`https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${clip.video.key.replaceAll(' ', '+')}`" controls width="1920" style="display: none"/>
             </div>
           </div>
         </div>
@@ -105,7 +106,7 @@ export default {
         this.color(pixel.r, pixel.g, pixel.b, pixel.a)
       }
     }, {
-      output: [337, 599],
+      output: [480, 270],
       graphical: true,
       tactic: 'precision'
     })
@@ -155,6 +156,7 @@ export default {
         `,
         result: function ({ data }) {
           this.projects = data.projects
+          this.render()
         },
       }
     }
@@ -187,9 +189,12 @@ export default {
       if (this.pauseGPU){
         return setTimeout(this.render, 100)
       }
-      this.kernel(this.videoElement, this.flipXY, this.alterColors)
+      const tracks = this.projects[0].tracks.map((track) => track.id).sort()
+      if (this.$refs[`trackVideoPlayer${tracks[0]}`]){
+        this.$refs[`trackVideoPlayer${tracks[0]}`][0].crossOrigin = "anonymous"
+        this.kernel(this.$refs[`trackVideoPlayer${tracks[0]}`][0], this.flipXY, this.alterColors)
+      }
       window.requestAnimationFrame(this.render)
-      this.calcFPS()
     },
     split: async function(){
       const toSplit = this.projects[0].tracks.map((track, track_index) => ({
@@ -287,6 +292,38 @@ export default {
     },
     nextFrame: function(){
       if (this.playing){
+        const tracks = this.projects[0].tracks.map((track) => track.clips.map((clip) => ({video_offset: clip.video_offset_time, track_id: track.id, start: clip.track_offset_time, end: clip.track_offset_time + clip.played_time, src: clip.video.key})))
+        const toBePlayed = tracks.map((track) => track.filter((clip) => {
+          return clip.start * 24 >= this.current && clip.start * 24 < this.current + 1
+        } )).reduce((prev, next) => prev.concat(next), [])
+        const toBeStoped = tracks.map((track) => track.filter((clip) => {
+          return clip.end * 24 >= this.current && clip.end * 24 < this.current + 1
+        } )).reduce((prev, next) => prev.concat(next), [])
+        var allInverting = {}
+        toBePlayed.forEach((clip) => {
+          allInverting[clip.track_id] = {}
+          allInverting[clip.track_id].start = clip
+        })
+        toBeStoped.forEach((clip) => {
+          if (allInverting[clip.track_id]){
+            allInverting[clip.track_id].stop = clip
+          } else {
+            allInverting[clip.track_id] = {}
+            allInverting[clip.track_id].stop = clip
+          }
+        })
+        allInverting = Object.entries(allInverting).map((value) => value[1])
+        allInverting.forEach((timing) => {
+          if (timing.start){
+            this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].src = `https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${timing.start.src.replaceAll(' ', '+')}`
+            this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].currentTime = timing.start.video_offset
+            this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].play()
+          } else {
+            this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].pause()
+            this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].src = null
+            this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].currentTime = 0
+          }
+        })
         this.current += 1
       }
     },
