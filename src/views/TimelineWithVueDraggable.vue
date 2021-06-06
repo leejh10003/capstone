@@ -93,18 +93,18 @@ export default {
     const scrollbarWidth = (outer.offsetWidth - inner.offsetWidth);
     outer.parentNode.removeChild(outer);
     this.scrollbarWidth = scrollbarWidth
-    this.kernel = this.gpu.createKernel(function(former, next) {//eslint-disable-line no-unused-vars
-      const pixel = former[this.thread.y][this.thread.x]
-    
-      this.color(pixel.b, pixel.g, pixel.r, pixel.a)
+    this.drawer = this.gpu.createKernel(function(result) {
+      /*const r =  / 16777216
+      const g = (result / 65536) - 256 * r
+      const b = (result / 256) - 65536 * r - 256 * g*/
+      this.color(result[this.thread.y][this.thread.x], result[this.thread.y][this.thread.x], result[this.thread.y][this.thread.x], 255)
     }, {
       output: [480, 270],
       graphical: true,
-      tactic: 'precision'
+      tactic: 'speed'
     })
-    this.intermidiate = this.kernel.canvas
     const canvasParent = this.$refs['canvas-parent']
-    canvasParent.appendChild(this.intermidiate)
+    canvasParent.appendChild(this.drawer.canvas)
   },
   computed: {
     trackWidths: function () { return `calc(100% - 300px)` },
@@ -149,6 +149,19 @@ export default {
         `,
         result: function ({ data }) {
           this.projects = data.projects
+          if(this.kernels.length === 0){
+            this.kernels = this.projects[0].tracks.map(() => this.gpu.createKernel(function(formerLayer, current) {//eslint-disable-line no-unused-vars
+              const pixel = current[this.thread.y][this.thread.x]
+              return pixel.r //(pixel.r * 16777216) + (pixel.g * 65536) + (pixel.b * 256) + pixel.a
+            }, {
+              output: [480, 270],
+              pipeline: true,
+              graphical: true,
+              precision: 'unsigned',
+              tactic: 'speed'
+            }))
+            this.results = this.kernels.map(() => null)
+          }
           this.render()
         },
       }
@@ -158,7 +171,8 @@ export default {
     return {
       uploadStatus: null,
       gpu: new GPU({mode: 'gpu'}),
-      kernel: null,
+      kernels: [],
+      results: [],
       disposed: false,
       pauseGPU: false,
       lastCalledTime: Date.now(),
@@ -172,26 +186,10 @@ export default {
       mouseIsIn: null,
       trackId: null,
       projects: null,
-      intermidiate: null,
-      intermidiateBuffer: null
+      drawer: null,
     }
   },
   methods: {
-    render: function () {
-      if (this.disposed){
-        return
-      }
-      if (!this.playing){
-        return setTimeout(this.render, 100)
-      }
-      const tracks = this.projects[0].tracks.map((track) => track.id).sort()
-      if (this.$refs[`trackVideoPlayer${tracks[0]}`]){
-        this.$refs[`trackVideoPlayer${tracks[0]}`][0].crossOrigin = "anonymous"
-        const result = this.kernel(this.$refs[`trackVideoPlayer${tracks[0]}`][0], this.$refs[`trackVideoPlayer${tracks[0]}`][0])
-        console.log(result)
-      }
-      window.requestAnimationFrame(this.render)
-    },
     split: async function(){
       const toSplit = this.projects[0].tracks.map((track, track_index) => ({
         clips: track.clips.map((clip, clip_index) => ({
@@ -311,10 +309,12 @@ export default {
         allInverting = Object.entries(allInverting).map((value) => value[1])
         allInverting.forEach((timing) => {
           if (timing.start){
+            console.log('start')
             this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].src = `https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${timing.start.src.replaceAll(' ', '+')}`
             this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].currentTime = timing.start.video_offset
             this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].play()
           } else {
+            console.log('finished')
             this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].pause()
             this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].src = null
             this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].currentTime = 0
@@ -444,6 +444,25 @@ export default {
           }
         }`
       })
+    },
+    render: function(){
+      const trackIds = this.projects[0].tracks.map((track) => track.id)
+      const allLoaded = trackIds.map(((id) => !!(this.$refs[`trackVideoPlayer${id}`])).bind(this)).reduce((previous, current) => previous && current, true) && !!(this.$refs['nullvideo'])
+      if(this.kernels.length > 0 && allLoaded){
+        const trackId = this.projects[0].tracks.map((track) => track.id).sort((former, latter) => former - latter) //eslint-disable-line no-unused-vars
+        this.kernels.forEach(((kernel, index) => { //eslint-disable-line no-unused-vars
+          if (index === 0){
+            this.$refs[`trackVideoPlayer${trackId[index]}`][0].crossOrigin = "anonymous"
+            this.results[0] = kernel(Array(270).fill().map(() => Array(480).fill().map(() => 0)), this.$refs[`trackVideoPlayer${trackId[index]}`][0])
+          } else {
+            this.$refs[`trackVideoPlayer${trackId[index]}`][0].crossOrigin = "anonymous"
+            this.results[index] = kernel(this.results[index - 1], this.$refs[`trackVideoPlayer${trackId[index]}`][0])
+          }
+        }).bind(this))
+        //this.drawer(this.results[this.results.length - 1])
+        console.log(this.results[0].toArray()[255])
+      }
+      window.requestAnimationFrame(this.render)
     },
     onDrop: async function (event, toward) {
       const kind = event.dataTransfer.getData('kind')
