@@ -1,6 +1,6 @@
 <template>
   <div>
-    <video ref='nullvideo' width="480" height="270" style="display: none"/>
+    <canvas ref='nullvideo' width="480" height="270" style="display: none"/>
     <vs-alert :title="uploadStatus === 'uploading' ? '업로드 중...' : '완료'" :active="uploadStatus !== null" :color.sync='colorUpload' style="position: absolute; bottom: 30px; right: 30px; width: 300px;z-index: 4;">
       {{ uploadStatus === 'uploading' ? '파일을 업로드하는 중입니다...' : '업로드가 완료되었습니다!' }}
     </vs-alert>
@@ -94,10 +94,8 @@ export default {
     outer.parentNode.removeChild(outer);
     this.scrollbarWidth = scrollbarWidth
     this.drawer = this.gpu.createKernel(function(result) {
-      /*const r =  / 16777216
-      const g = (result / 65536) - 256 * r
-      const b = (result / 256) - 65536 * r - 256 * g*/
-      this.color(result[this.thread.y][this.thread.x], result[this.thread.y][this.thread.x], result[this.thread.y][this.thread.x], 255)
+      const pixel = result[this.thread.y][this.thread.x]
+      this.color(pixel.r, pixel.g, pixel.b, pixel.a)
     }, {
       output: [480, 270],
       graphical: true,
@@ -150,12 +148,16 @@ export default {
         result: function ({ data }) {
           this.projects = data.projects
           if(this.kernels.length === 0){
-            this.kernels = this.projects[0].tracks.map(() => this.gpu.createKernel(function(formerLayer, current) {//eslint-disable-line no-unused-vars
+            this.kernels = this.projects[0].tracks.map(() => this.gpu.createKernel(function(formerLayer, current, start, opacity) {//eslint-disable-line no-unused-vars
               const pixel = current[this.thread.y][this.thread.x]
-              return pixel.r //(pixel.r * 16777216) + (pixel.g * 65536) + (pixel.b * 256) + pixel.a
+              if (start === 0){
+                const previousPixel = formerLayer[this.thread.y][this.thread.x]
+                this.color(pixel.r * opacity + previousPixel.r * (1 - opacity), pixel.g * opacity + previousPixel.g * (1 - opacity), pixel.b * opacity + previousPixel.b * (1 - opacity), 1)
+              } else {
+                this.color(pixel.r * opacity, pixel.g * opacity, pixel.b * opacity, 1)
+              }
             }, {
               output: [480, 270],
-              pipeline: true,
               graphical: true,
               precision: 'unsigned',
               tactic: 'speed'
@@ -309,12 +311,10 @@ export default {
         allInverting = Object.entries(allInverting).map((value) => value[1])
         allInverting.forEach((timing) => {
           if (timing.start){
-            console.log('start')
             this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].src = `https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${timing.start.src.replaceAll(' ', '+')}`
             this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].currentTime = timing.start.video_offset
             this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].play()
           } else {
-            console.log('finished')
             this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].pause()
             this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].src = null
             this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].currentTime = 0
@@ -453,14 +453,12 @@ export default {
         this.kernels.forEach(((kernel, index) => { //eslint-disable-line no-unused-vars
           if (index === 0){
             this.$refs[`trackVideoPlayer${trackId[index]}`][0].crossOrigin = "anonymous"
-            this.results[0] = kernel(Array(270).fill().map(() => Array(480).fill().map(() => 0)), this.$refs[`trackVideoPlayer${trackId[index]}`][0])
+            this.results[0] = kernel(this.$refs['nullvideo'], this.$refs[`trackVideoPlayer${trackId[index]}`][0], 1, 0.5)
           } else {
             this.$refs[`trackVideoPlayer${trackId[index]}`][0].crossOrigin = "anonymous"
-            this.results[index] = kernel(this.results[index - 1], this.$refs[`trackVideoPlayer${trackId[index]}`][0])
+            this.results[index] = kernel(this.kernels[index - 1].canvas, this.$refs[`trackVideoPlayer${trackId[index]}`][0], 0, 1)
           }
         }).bind(this))
-        //this.drawer(this.results[this.results.length - 1])
-        console.log(this.results[0].toArray()[255])
       }
       window.requestAnimationFrame(this.render)
     },
