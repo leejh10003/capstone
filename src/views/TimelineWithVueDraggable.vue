@@ -93,23 +93,18 @@ export default {
     const scrollbarWidth = (outer.offsetWidth - inner.offsetWidth);
     outer.parentNode.removeChild(outer);
     this.scrollbarWidth = scrollbarWidth
-    this.kernel = this.gpu.createKernel(function(frame, flipXY, alterColors) {
-      const pixel = flipXY
-        ? frame[this.output.y - 1 - this.thread.y][this.output.x - 1 - this.thread.x]
-        : frame[this.thread.y][this.thread.x]
+    this.kernel = this.gpu.createKernel(function(former, next) {//eslint-disable-line no-unused-vars
+      const pixel = former[this.thread.y][this.thread.x]
     
-      if (alterColors) {
-        this.color(pixel.b, pixel.g, pixel.r, pixel.a)
-      } else {
-        this.color(pixel.r, pixel.g, pixel.b, pixel.a)
-      }
+      this.color(pixel.b, pixel.g, pixel.r, pixel.a)
     }, {
       output: [480, 270],
       graphical: true,
       tactic: 'precision'
     })
+    this.intermidiate = this.kernel.canvas
     const canvasParent = this.$refs['canvas-parent']
-    canvasParent.appendChild(this.kernel.canvas)
+    canvasParent.appendChild(this.intermidiate)
   },
   computed: {
     trackWidths: function () { return `calc(100% - 300px)` },
@@ -176,7 +171,9 @@ export default {
       playing: false,
       mouseIsIn: null,
       trackId: null,
-      projects: null
+      projects: null,
+      intermidiate: null,
+      intermidiateBuffer: null
     }
   },
   methods: {
@@ -184,13 +181,14 @@ export default {
       if (this.disposed){
         return
       }
-      if (this.pauseGPU){
+      if (!this.playing){
         return setTimeout(this.render, 100)
       }
       const tracks = this.projects[0].tracks.map((track) => track.id).sort()
       if (this.$refs[`trackVideoPlayer${tracks[0]}`]){
         this.$refs[`trackVideoPlayer${tracks[0]}`][0].crossOrigin = "anonymous"
-        this.kernel(this.$refs[`trackVideoPlayer${tracks[0]}`][0], this.flipXY, this.alterColors)
+        const result = this.kernel(this.$refs[`trackVideoPlayer${tracks[0]}`][0], this.$refs[`trackVideoPlayer${tracks[0]}`][0])
+        console.log(result)
       }
       window.requestAnimationFrame(this.render)
     },
