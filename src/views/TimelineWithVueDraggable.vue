@@ -189,6 +189,7 @@ export default {
       trackId: null,
       projects: null,
       drawer: null,
+      effects: {},
     }
   },
   methods: {
@@ -288,7 +289,13 @@ export default {
     },
     nextFrame: function(){
       if (this.playing){
-        const tracks = this.projects[0].tracks.map((track) => track.clips.map((clip) => ({video_offset: clip.video_offset_time, track_id: track.id, start: clip.track_offset_time, end: clip.track_offset_time + clip.played_time, src: clip.video.key})))
+        const tracks = this.projects[0].tracks.map((track) => track.clips.map((clip) => ({
+          video_offset: clip.video_offset_time,
+          track_id: track.id,
+          start: clip.track_offset_time,
+          end: clip.track_offset_time + clip.played_time,
+          effect: clip.effect,
+          src: clip.video.key})))
         const toBePlayed = tracks.map((track) => track.filter((clip) => {
           return clip.start * 24 >= this.current && clip.start * 24 < this.current + 1
         } )).reduce((prev, next) => prev.concat(next), [])
@@ -314,10 +321,12 @@ export default {
             this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].src = `https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${timing.start.src.replaceAll(' ', '+')}`
             this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].currentTime = timing.start.video_offset
             this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].play()
+            this.effects[`effect${timing.start.track_id}`] = timing.start.effect
           } else {
             this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].pause()
             this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].src = null
             this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].currentTime = 0
+            delete this.effects[`effect${timing.stop.track_id}`]
           }
         })
         this.current += 1
@@ -453,10 +462,10 @@ export default {
         this.kernels.forEach(((kernel, index) => { //eslint-disable-line no-unused-vars
           if (index === 0){
             this.$refs[`trackVideoPlayer${trackId[index]}`][0].crossOrigin = "anonymous"
-            this.results[0] = kernel(this.$refs['nullvideo'], this.$refs[`trackVideoPlayer${trackId[index]}`][0], 1, 0.5)
+            this.results[0] = kernel(this.$refs['nullvideo'], this.$refs[`trackVideoPlayer${trackId[index]}`][0], 1, this.effects[`effect${trackId[index]}`]?.opacity ?? 1)
           } else {
             this.$refs[`trackVideoPlayer${trackId[index]}`][0].crossOrigin = "anonymous"
-            this.results[index] = kernel(this.kernels[index - 1].canvas, this.$refs[`trackVideoPlayer${trackId[index]}`][0], 0, 1)
+            this.results[index] = kernel(this.kernels[index - 1].canvas, this.$refs[`trackVideoPlayer${trackId[index]}`][0], 0, this.effects[`effect${trackId[index]}`]?.opacity ?? 1)
           }
         }).bind(this))
       }
