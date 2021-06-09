@@ -139,11 +139,13 @@ export default {
           this.projects = data.projects
           const mapped = this.projects[0].tracks.map((track, index) => {//eslint-disable-line no-unused-vars
             return {
-              arguments: [`video${index}`, `opacity${index}`],
-              code: `const pixel${index} = video${index}[this.thread.y][this.thread.x];\n` +
+              arguments: [`video${index}`, `opacity${index}`, `playing${index}`],
+              code: `if (playing${index} === 1){\n` +
+              `const pixel${index} = video${index}[this.thread.y][this.thread.x];\n` +
               `r = r * (1 - opacity${index}) + pixel${index}.r * opacity${index};\n` +
               `g = g * (1 - opacity${index}) + pixel${index}.g * opacity${index};\n` +
-              `b = b * (1 - opacity${index}) + pixel${index}.b * opacity${index};\n`
+              `b = b * (1 - opacity${index}) + pixel${index}.b * opacity${index};\n` +
+              `}\n`
             }
           })
           const args = mapped.reduce((prev, current) => prev.concat(current.arguments), [])
@@ -316,12 +318,12 @@ export default {
         })
         allInverting = Object.entries(allInverting).map((value) => value[1])
         allInverting.forEach((timing) => {
-          if (timing.start){
+          if (timing.start && this.$refs[`trackVideoPlayer${timing.start.track_id}`]?.[0]){
             this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].src = `https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${timing.start.src.replaceAll(' ', '+')}`
             this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].currentTime = timing.start.video_offset
             this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].play()
             this.effects[`effect${timing.start.track_id}`] = timing.start.effect
-          } else {
+          } else if (timing.stop && this.$refs[`trackVideoPlayer${timing.stop.track_id}`]?.[0]) {
             this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].pause()
             this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].src = null
             this.$refs[`trackVideoPlayer${timing.stop.track_id}`][0].currentTime = 0
@@ -438,6 +440,18 @@ export default {
     setCurrent(event){
       const xOffset = this.$refs['timeline'].getClientRects()[0].x
       this.current = event.clientX - xOffset
+      const tracks = this.projects[0].tracks.map((track) => track.clips.map((clip) => ({
+        video_offset: clip.video_offset_time,
+        track_id: track.id,
+        start: clip.track_offset_time,
+        end: clip.track_offset_time + clip.played_time,
+        effect: clip.effect,
+        src: clip.video.key})))
+      const playing = tracks.map((track) => track.filter((clip) => clip.start * 24 <= this.current && clip.end * 24 >= this.current)).reduce((current, next) => current.concat(next), [])
+      playing.forEach((clip) => {
+        this.$refs[`trackVideoPlayer${clip.track_id}`][0].currentTime = this.current / 24 - clip.video_offset
+        this.effects[`effect${clip.track_id}`] = clip.effect
+      })
     },
     addTrack: async function(){
       const id = (this.projects[0].tracks?.reduce((prev, next) => Math.max(prev, next.id), 0) ?? 0) + 1
@@ -454,13 +468,20 @@ export default {
       })
     },
     render: function(){
-      const trackIds = _.cloneDeep(this.projects[0].tracks).sort((former, latter) => former.id - latter.id).map((track) => track.id)
-      const allLoaded = trackIds.map(((id) => !!(this.$refs[`trackVideoPlayer${id}`])).bind(this)).reduce((previous, current) => previous && current, true)
+      const tracks = _.cloneDeep(this.projects[0].tracks).sort((former, latter) => former.id - latter.id).map((track) => {
+        return {
+          id: track.id,
+          isPlaying: track.clips.filter((clip) => clip.track_offset_time <= this.current / 24 && clip.track_offset_time + clip.played_time >= this.current / 24).length > 0 ? 1 : 0
+        }
+      })
+      const allLoaded = tracks.map(((track) => !!(this.$refs[`trackVideoPlayer${track.id}`])).bind(this)).reduce((previous, current) => previous && current, true)
       if (this.kernel !== null && allLoaded){
-        trackIds.forEach((trackId) => {
-          this.$refs[`trackVideoPlayer${trackId}`][0].crossOrigin = "anonymous"
+        tracks.forEach((track) => {
+          if (this.$refs[`trackVideoPlayer${track.id}`][0]){
+            this.$refs[`trackVideoPlayer${track.id}`][0].crossOrigin = "anonymous"
+          }
         })
-        const args = trackIds.map((trackId) => ([this.$refs[`trackVideoPlayer${trackId}`][0], this.effects[`effect${trackId}`]?.opacity ?? 1])).reduce((prev, next) => prev.concat(next), [])
+        const args = tracks.map((track) => ([this.$refs[`trackVideoPlayer${track.id}`][0], this.effects[`effect${track.id}`]?.opacity ?? 1, track.isPlaying])).reduce((prev, next) => prev.concat(next), []) //eslint-disable-line no-unused-vars
         this.kernel(...args)
       }
       window.requestAnimationFrame(this.render)
