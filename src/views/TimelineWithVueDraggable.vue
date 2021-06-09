@@ -36,7 +36,7 @@
           </div>
         </div>
       </simplebar>
-      <simplebar data-simplebar-auto-hide="true" id="timeline" :style="{height: '300px', width: trackWidths}">
+      <simplebar data-simplebar-auto-hide="true" id="timeline" :style="{height: '300px', width: `calc(100% - 300px)`}">
         <div
           @click="setCurrent"
           @mouseenter="enter"
@@ -53,7 +53,7 @@
             v-for="track in projects[0].tracks"
             :key="`track${track.id}`"
             :ref="`track${track.id}`"
-            :style="{ position: 'relative' }"
+            :style="{ position: 'relative', width: `${projects[0].length * 24}px` }"
             @dragenter.prevent
             @dragover.prevent
             @drop="onDrop($event, track.id)"
@@ -106,7 +106,6 @@ export default {
     this.scrollbarWidth = scrollbarWidth
   },
   computed: {
-    trackWidths: function () { return `calc(100% - 300px)` },
     colorUpload: function () { return this.uploadStatus === 'uploading' ? 'warning' : 'success' }
   },
   apollo: {
@@ -120,6 +119,7 @@ export default {
         query: gql`subscription ($id: bigint!){
           projects(where: {id: {_eq: $id}}) {
             id
+            length
             videos(order_by: [{id: desc}]) {
               id
               exif
@@ -342,6 +342,10 @@ export default {
           }
         })
         this.current += 1
+        console.log(this.current / 24, this.projects[0].length)
+        if (this.current / 24 >= this.projects[0].length){
+          this.playing = false
+        }
       }
     },
     enter: function() {
@@ -460,6 +464,7 @@ export default {
         src: clip.video.key})))
       const playing = tracks.map((track) => track.filter((clip) => clip.start * 24 <= this.current && clip.end * 24 >= this.current)).reduce((current, next) => current.concat(next), [])
       playing.forEach((clip) => {
+        this.$refs[`trackVideoPlayer${clip.track_id}`][0].src = `https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${clip.src.replaceAll(' ', '+')}`
         this.$refs[`trackVideoPlayer${clip.track_id}`][0].currentTime = this.current / 24 - clip.video_offset
         this.effects[`effect${clip.track_id}`] = clip.effect
       })
@@ -662,7 +667,6 @@ export default {
 
 <style>
 .drop-zone{
-  width: calc(100% + 150px);
   margin: 10px auto;
   background-color: #ecf0f1;
   display: flex;
