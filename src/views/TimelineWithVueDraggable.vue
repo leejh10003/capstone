@@ -12,18 +12,29 @@
         <vs-button color="primary" type="filled" icon="vertical_split" @click="split" style="z-index: 1;"/>
       </div>
       <simplebar data-simplebar-auto-hide="true" id="videos">
+        <div style="min-height: 300px; min-width: 300px"
+        @dragover.prevent
+        @dragenter.prevent
+        @drop.prevent="dropFile">
           <div
-            v-for="(video, videoIndex) in projects[0].videos"
-            :key="`video${videoIndex}`"
             @dragover.prevent
             @dragenter.prevent
-            @drop.prevent="dropFile"
-            @dragstart="startDrag($event, video, null, 'fromVideos')"
-            :ref="`video${video.id}`"
-            draggable="true"
-            class="video">
+            v-for="(row, rowIndex) in splitThree(projects[0].videos)"
+            class="row"
+            :key="`row${rowIndex}`">
+            <div
+              v-for="(video, videoIndex) in row"
+              :key="`row${videoIndex}`"
+              @dragover.prevent
+              @dragenter.prevent
+              @dragstart="startDrag($event, video, null, 'fromVideos')"
+              :ref="`video${video.id}`"
+              draggable="true"
+              class="video">
             {{video.filename}}
+            </div>
           </div>
+        </div>
       </simplebar>
       <simplebar data-simplebar-auto-hide="true" id="timeline" :style="{height: '300px', width: trackWidths}">
         <div
@@ -687,7 +698,7 @@ export default {
   position: relative;
 }
 .video{
-  width: 280px;
+  width: 80px;
   margin: 10px;
   height: 80px;
   color: white;
