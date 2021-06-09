@@ -342,7 +342,6 @@ export default {
           }
         })
         this.current += 1
-        console.log(this.current / 24, this.projects[0].length)
         if (this.current / 24 >= this.projects[0].length){
           this.playing = false
         }
