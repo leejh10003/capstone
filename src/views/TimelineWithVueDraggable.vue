@@ -93,16 +93,6 @@ export default {
     const scrollbarWidth = (outer.offsetWidth - inner.offsetWidth);
     outer.parentNode.removeChild(outer);
     this.scrollbarWidth = scrollbarWidth
-    this.drawer = this.gpu.createKernel(function(result) {
-      const pixel = result[this.thread.y][this.thread.x]
-      this.color(pixel.r, pixel.g, pixel.b, pixel.a)
-    }, {
-      output: [480, 270],
-      graphical: true,
-      tactic: 'speed'
-    })
-    const canvasParent = this.$refs['canvas-parent']
-    canvasParent.appendChild(this.drawer.canvas)
   },
   computed: {
     trackWidths: function () { return `calc(100% - 300px)` },
@@ -147,23 +137,27 @@ export default {
         `,
         result: function ({ data }) {
           this.projects = data.projects
-          if(this.kernels.length === 0){
-            this.kernels = this.projects[0].tracks.map(() => this.gpu.createKernel(function(formerLayer, current, start, opacity) {//eslint-disable-line no-unused-vars
-              const pixel = current[this.thread.y][this.thread.x]
-              if (start === 0){
-                const previousPixel = formerLayer[this.thread.y][this.thread.x]
-                this.color(pixel.r * opacity + previousPixel.r * (1 - opacity), pixel.g * opacity + previousPixel.g * (1 - opacity), pixel.b * opacity + previousPixel.b * (1 - opacity), 1)
-              } else {
-                this.color(pixel.r * opacity, pixel.g * opacity, pixel.b * opacity, 1)
-              }
-            }, {
-              output: [480, 270],
-              graphical: true,
-              precision: 'unsigned',
-              tactic: 'speed'
-            }))
-            this.results = this.kernels.map(() => null)
-          }
+          const mapped = this.projects[0].tracks.map((track, index) => {//eslint-disable-line no-unused-vars
+            return {
+              arguments: [`video${index}`, `opacity${index}`],
+              code: `const pixel${index} = video${index}[this.thread.y][this.thread.x];\n` +
+              `r = r * (1 - opacity${index}) + pixel${index}.r * opacity${index};\n` +
+              `g = g * (1 - opacity${index}) + pixel${index}.g * opacity${index};\n` +
+              `b = b * (1 - opacity${index}) + pixel${index}.b * opacity${index};\n`
+            }
+          })
+          const args = mapped.reduce((prev, current) => prev.concat(current.arguments), [])
+          const code = 'var r = 0.0; var g = 0; var b = 0;\n' + mapped.reduce((prev, current) => prev + '\n' + current.code, '') + 'this.color(r, g, b,1)'
+          const kernel = new Function(...args, code)
+          this.kernel = this.gpu.createKernel(kernel, {
+            output: [480, 270],
+            graphical: true,
+            precision: 'unsigned',
+            tactic: 'precision'
+          })
+          const canvasParent = this.$refs['canvas-parent']
+          while ( this.$refs['canvas-parent'].hasChildNodes() ) { this.$refs['canvas-parent'].removeChild( this.$refs['canvas-parent'].firstChild ); }
+          canvasParent.appendChild(this.kernel.canvas)
           this.render()
         },
       }
@@ -174,7 +168,7 @@ export default {
       uploadStatus: null,
       gpu: new GPU({mode: 'gpu'}),
       kernels: [],
-      results: [],
+      kernel: Function('a', 'return a'),
       disposed: false,
       pauseGPU: false,
       lastCalledTime: Date.now(),
@@ -286,6 +280,11 @@ export default {
     },
     play: function(){
       this.playing = !this.playing
+      if (this.playing === false){
+        this.projects[0].tracks.map((track) => track.id).forEach((id) => this.$refs[`trackVideoPlayer${id}`][0].pause())
+      } else {
+        this.projects[0].tracks.map((track) => track.id).forEach((id) => this.$refs[`trackVideoPlayer${id}`][0].play())
+      }
     },
     nextFrame: function(){
       if (this.playing){
@@ -455,19 +454,14 @@ export default {
       })
     },
     render: function(){
-      const trackIds = this.projects[0].tracks.map((track) => track.id)
-      const allLoaded = trackIds.map(((id) => !!(this.$refs[`trackVideoPlayer${id}`])).bind(this)).reduce((previous, current) => previous && current, true) && !!(this.$refs['nullvideo'])
-      if(this.kernels.length > 0 && allLoaded){
-        const trackId = this.projects[0].tracks.map((track) => track.id).sort((former, latter) => former - latter) //eslint-disable-line no-unused-vars
-        this.kernels.forEach(((kernel, index) => { //eslint-disable-line no-unused-vars
-          if (index === 0){
-            this.$refs[`trackVideoPlayer${trackId[index]}`][0].crossOrigin = "anonymous"
-            this.results[0] = kernel(this.$refs['nullvideo'], this.$refs[`trackVideoPlayer${trackId[index]}`][0], 1, this.effects[`effect${trackId[index]}`]?.opacity ?? 1)
-          } else {
-            this.$refs[`trackVideoPlayer${trackId[index]}`][0].crossOrigin = "anonymous"
-            this.results[index] = kernel(this.kernels[index - 1].canvas, this.$refs[`trackVideoPlayer${trackId[index]}`][0], 0, this.effects[`effect${trackId[index]}`]?.opacity ?? 1)
-          }
-        }).bind(this))
+      const trackIds = _.cloneDeep(this.projects[0].tracks).sort((former, latter) => former.id - latter.id).map((track) => track.id)
+      const allLoaded = trackIds.map(((id) => !!(this.$refs[`trackVideoPlayer${id}`])).bind(this)).reduce((previous, current) => previous && current, true)
+      if (this.kernel !== null && allLoaded){
+        trackIds.forEach((trackId) => {
+          this.$refs[`trackVideoPlayer${trackId}`][0].crossOrigin = "anonymous"
+        })
+        const args = trackIds.map((trackId) => ([this.$refs[`trackVideoPlayer${trackId}`][0], this.effects[`effect${trackId}`]?.opacity ?? 1])).reduce((prev, next) => prev.concat(next), [])
+        this.kernel(...args)
       }
       window.requestAnimationFrame(this.render)
     },
@@ -666,7 +660,6 @@ export default {
   width: 300px;
   background-color: #000000;
   height: 300px;
-  /*overflow: scroll;*/
 }
 #editor{
   height: calc(100vh - 270px);
