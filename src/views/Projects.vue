@@ -12,11 +12,6 @@ export default {
   apollo: {
     $subscribe: {
       projects: {
-        variables: function (){
-          return {
-            id: this.$route.params.id
-          }
-        },
         query: gql`subscription{
           projects(order_by: {id: desc}) {
             id
