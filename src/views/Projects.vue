@@ -6,8 +6,10 @@
 <script>
 import gql from 'graphql-tag'
 export default {
-  data: {
-    projects: null
+  data(){
+    return {
+      projects: null
+    }
   },
   apollo: {
     $subscribe: {
