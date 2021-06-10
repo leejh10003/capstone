@@ -54,9 +54,9 @@ const routes = [
     component: () => import (/* webpackChunkName: "login" */ '../views/TimelineWithVueDraggable.vue'),
   },
   {
-    path: '/project',
-    name: 'Project',
-    component: () => import (/* webpackChunkName: "login" */ '../views/Project.vue'),
+    path: '/projects',
+    name: 'Projects',
+    component: () => import (/* webpackChunkName: "login" */ '../views/Projects.vue'),
   }
 ]
 
