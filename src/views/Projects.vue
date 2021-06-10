@@ -2,7 +2,19 @@
   <div id="projects">
     <vs-row v-for="(row, index) in splitThree(projects)" :key="`row${index}`" vs-justify="space-around">
       <div v-for="project in row" :key="`project${project.id}`">
-        <div class="slate-card" @click="clickCard(project)">
+        <div v-if="project.append" class="slate-card">
+          <div class="upper-stripe" />
+          <div class="lower-stripe" />
+          <div class="slate-content">
+            <div class="center">
+              +
+            </div>
+            <div class="new-project">
+              새 프로젝트 생성...
+            </div>
+          </div>
+        </div>
+        <div v-else class="slate-card" @click="clickCard(project)">
           <div class="upper-stripe" />
           <div class="lower-stripe" />
           <div class="slate-content">
@@ -34,6 +46,13 @@
   </div>
 </template>
 <style>
+.new-project{
+  text-align: center;
+}
+.center{
+  font-size: 150px;
+  text-align: center;
+}
 #projects{
   background-image:url('~@/assets/cork.jpg')
 }
@@ -182,7 +201,9 @@ export default {
         }
         `,
         result: function ({ data }) {
-          this.projects = data.projects
+          this.projects = [{
+            append: true
+          }].concat(data.projects)
         },
       }
     }
