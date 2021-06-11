@@ -7,7 +7,7 @@
         </vs-navbar-title>
       </template>
       <vs-navbar-item index="0">
-        <a href="#">로그아웃</a>
+        <a @click="logout">로그아웃</a>
       </vs-navbar-item>
     </vs-navbar>
     <div v-if="projects">
@@ -33,6 +33,7 @@
 import gql from 'graphql-tag'
 import SlateNewProject from '../components/SlateNewProject.vue'
 import SlateProject from '../components/SlateProject.vue'
+import { Auth } from 'aws-amplify';
 export default {
   components: {
     'slate-new-project': SlateNewProject,
@@ -44,6 +45,16 @@ export default {
     }
   },
   methods: {
+    async logout(){
+      this.$vs.loading({
+        type: 'corners',
+        scale: 4,
+        text: '로그아웃 중...'
+      })
+      await Auth.signOut()
+      this.$router.push('/login')
+      this.$vs.loading.close()
+    },
     splitSix(projects){
       var index = 0;
       var tempArray = [];

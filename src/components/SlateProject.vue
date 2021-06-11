@@ -225,7 +225,7 @@ export default {
   },
   methods: {
     clickCard(project){
-      this.$router.push(`/drag/${project.id}`)
+      this.$router.push(`/project/${project.id}`)
     },
     async changeName(){
       this.changing = true
