@@ -951,7 +951,7 @@ export default {
   height: 300px;
 }
 #editor{
-  height: calc(100vh - 488px);
+  height: calc(100vh - 493.55px);
   position: relative;
 }
 .video{
