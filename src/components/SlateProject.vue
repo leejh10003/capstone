@@ -151,10 +151,13 @@ export default {
       this.$router.push(`/drag/${project.id}`)
     },
     getUsers(element) {
-      return element.permissions.map((permission) => ({
-        name: permission.name,
-        initial: permission.name.replace(/\s+/, ' ').split(' ').map((text) => text.charAt(0).toUpperCase()).slice(0, 2).join('')
-      }))
+      return element.permissions.map((permission) => {
+        const name = (permission?.user?.name || permission.user.email.split('@')[0])
+        return {
+          name: name.length > 3 ? `${name.substring(0, 3)}...` : name,
+          initial: permission?.user?.name?.replace(/\s+/, ' ')?.split(' ')?.map((text) => text?.charAt(0)?.toUpperCase())?.slice(0, 2).join('') || permission?.user?.email?.charAt(0)?.toUpperCase()
+        }
+      })
     }
   }
 }

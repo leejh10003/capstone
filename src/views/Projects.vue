@@ -72,7 +72,11 @@ export default {
             length
             name
             permissions(order_by: {user_id: asc}, limit: 3){
-              user_id
+              user{
+                id
+                name
+                email
+              }
             }
             permissions_aggregate{
               aggregate{
