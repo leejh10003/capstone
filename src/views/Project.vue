@@ -145,7 +145,12 @@ export default {
   components: {
     simplebar
   },
-  mounted: function (){
+  mounted: async function (){
+    try{
+      (await Auth.currentAuthenticatedUser())
+    } catch {
+      this.$router.push('/login')
+    }
     setInterval(this.nextFrame, 1000/24)
     const outer = document.createElement('div');
     outer.style.visibility = 'hidden';

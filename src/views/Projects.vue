@@ -39,6 +39,13 @@ export default {
     'slate-new-project': SlateNewProject,
     'slate-project': SlateProject
   },
+  async created(){
+    try{
+      (await Auth.currentAuthenticatedUser())
+    } catch {
+      this.$router.push('/login')
+    }
+  },
   data(){
     return {
       projects: null

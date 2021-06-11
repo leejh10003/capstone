@@ -42,6 +42,14 @@
 import { Auth } from 'aws-amplify';
 export default {
   name: 'Login',
+  async created() {
+    try{
+      (await Auth.currentAuthenticatedUser())
+      this.$router.push('/projects')
+    } catch {
+      console.log('not logged in')
+    }
+  },
   methods: {
     async login() {
       this.$vs.loading({
