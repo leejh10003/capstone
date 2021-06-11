@@ -32,7 +32,8 @@
   background: white;
 }
 #projects{
-  background-image:url('~@/assets/cork.jpg')
+  background-image:url('~@/assets/cork.jpg');
+  min-height: 100vh;
 }
 </style>
 <script>
