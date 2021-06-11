@@ -20,12 +20,10 @@
       <h4 v-line-clamp="1" id="opacity" v-if="selectedClip">불투명도</h4>
       <el-slider id="opacity-slider" v-if="selectedClip" v-model="slider" @change="opacityChange($event, selectedClip)"/>
     </div>
+    <vs-button id="play" color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play" />
+    <vs-button id="split" color="primary" type="filled" icon="vertical_split" @click="split" style="z-index: 1;"/>
+    <vs-button id="track-add" color="primary" type="filled" icon="add" @click="addTrack" >트랙 추가</vs-button>
     <div v-if="projects != null" id="editor">
-      <div style="position: absolute; bottom: 300px;">
-        <vs-button id="play" color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play" />
-        <vs-button id="split" color="primary" type="filled" icon="vertical_split" @click="split" style="z-index: 1;"/>
-        <vs-button id="track-add" color="primary" type="filled" icon="add" @click="addTrack" >트랙 추가</vs-button>
-      </div>
       <simplebar data-simplebar-auto-hide="true" id="videos">
         <div style="min-height: 300px; min-width: 300px"
         @dragover.prevent
@@ -725,18 +723,18 @@ export default {
 <style>
 #split{
   position: absolute;
-  top: -10px;
+  bottom: 310px;
   left: calc(50vw + 150px)
 }
 #track-add{
-  position: relative;
-  top: -10px;
+  position: absolute;
+  bottom: 310px;
   left: 300px;
   z-index: 2;
 }
 #play{
   position: absolute;
-  top: -50px;
+  top: 500px;
   left: 390px;
 }
 #opacity-slider{
@@ -759,7 +757,7 @@ export default {
 }
 #effect{
   position: absolute;
-  height: calc(100vh - 380px);
+  height: 430px;
   right: 0;
   background-color: grey;
   width: calc(100vw - 840px);
