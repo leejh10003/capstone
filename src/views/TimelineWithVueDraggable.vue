@@ -7,7 +7,7 @@
         </vs-navbar-title>
       </template>
       <vs-navbar-item index="0">
-        <a href="#">로그아웃</a>
+        <router-link to="/projects">프로젝트 목록</router-link>
       </vs-navbar-item>
     </vs-navbar>
     <vs-alert :title="uploadStatus === 'uploading' ? '업로드 중...' : '완료'" :active="uploadStatus !== null" :color.sync='colorUpload' style="position: absolute; bottom: 30px; right: 30px; width: 300px;z-index: 4;">
@@ -22,9 +22,9 @@
     </div>
     <div v-if="projects != null" id="editor">
       <div style="position: absolute; bottom: 300px;">
-        <vs-button color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play" />
-        <vs-button color="primary" type="filled" icon="add" @click="addTrack" style="z-index: 1; float:right">트랙 추가</vs-button>
-        <vs-button color="primary" type="filled" icon="vertical_split" @click="split" style="z-index: 1;"/>
+        <vs-button id="play" color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play" />
+        <vs-button id="split" color="primary" type="filled" icon="vertical_split" @click="split" style="z-index: 1;"/>
+        <vs-button id="track-add" color="primary" type="filled" icon="add" @click="addTrack" >트랙 추가</vs-button>
       </div>
       <simplebar data-simplebar-auto-hide="true" id="videos">
         <div style="min-height: 300px; min-width: 300px"
@@ -723,6 +723,22 @@ export default {
 </script>
 
 <style>
+#split{
+  position: absolute;
+  top: -10px;
+  left: calc(50vw + 150px)
+}
+#track-add{
+  position: relative;
+  top: -10px;
+  left: 300px;
+  z-index: 2;
+}
+#play{
+  position: absolute;
+  top: -50px;
+  left: 390px;
+}
 #opacity-slider{
   margin: 20px;
   width: calc(100% - 40px);
