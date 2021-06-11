@@ -10,7 +10,10 @@
       <el-form-item label="password">
         <el-input type="password" v-model="password" placeholder="password..." />
       </el-form-item>
-      <el-button @click="register">Register</el-button>
+      <el-button-group>
+        <el-button @click="back">back to sign in</el-button>
+        <el-button type="primary" @click="register">Register</el-button>
+      </el-button-group>
     </el-form>
     <el-form class="form" @submit.prevent="confirmAmplify" v-if="confirm">
       <h2>Register to Fluvid</h2>
@@ -20,7 +23,7 @@
           placeholder="confirmation code..."
         />
       </el-form-item>
-      <el-button @click="confirmAmplify">confirm</el-button>
+      <el-button type="primary" @click="confirmAmplify">confirm</el-button>
     </el-form>
   </div>
 </template>
@@ -61,6 +64,9 @@ export default {
     }
   },
   methods: {
+    back(){
+      this.$router.push('/login')
+    },
     async confirmAmplify(){
       await Auth.confirmSignUp(this.username, this.confirmationCode);
       this.$router.pusy("/login")

@@ -10,7 +10,10 @@
       <el-form-item label="password">
         <el-input type="password" v-model="password" placeholder="password..." />
       </el-form-item>
-      <el-button @click="login">sign in</el-button>
+      <el-button-group>
+        <el-button @click="signup">sign up</el-button>
+        <el-button type="primary" @click="login">sign in</el-button>
+      </el-button-group>
     </el-form>
   </div>
 </template>
@@ -51,6 +54,9 @@ export default {
     }
   },
   methods: {
+    signup(){
+      this.$router.push('/register')
+    },
     async login() {
       this.$vs.loading({
         type: 'corners',
