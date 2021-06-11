@@ -1,5 +1,37 @@
 <template>
-  <div class="slate-card" @click="clickCard(project)">
+  <div class="slate-card">
+    <el-dialog
+      @click.
+      :visible.sync="activePrompt"
+      width="30%"
+      :before-close="handleClose">
+      <div @click.stop class="con-exemple-prompt">
+        추가할 팀원의 이메일 이름을 적어주세요
+        <el-autocomplete
+          autocomplete
+          :fetch-suggestions="search"
+          @select="handleSelect"
+          class="selectExample"
+          label="이메일"
+          v-model="user.email"
+          value-key="value"
+          />
+        <div class="permissions">
+          <vs-radio v-model="permission" vs-name="permission" vs-value="admin">admin</vs-radio>
+          <vs-radio v-model="permission" vs-name="permission" vs-value="participants">participants</vs-radio>
+          <vs-button @click.stop="addUser" size="small" color="danger" type="gradient" icon="person_add"></vs-button>
+        </div>
+        <div style="height: 10px"/>
+        <span v-for="permission in users" :key="permission.user.id">
+          <vs-chip v-if="permission.user.id === selfId">
+            {{permission.user.email}} {{permission.role}}
+          </vs-chip>
+          <vs-chip v-else closable @click="remove(permission)">
+            {{permission.user.email}} {{permission.role}}
+          </vs-chip>
+        </span>
+      </div>
+    </el-dialog>
     <div class="upper-stripe" />
     <div class="lower-stripe" />
     <div class="slate-content">
@@ -9,19 +41,19 @@
         <div class="slate-placeholder-flex border-placeholder">SCENE</div>
         <div class="slate-placeholder-flex">TAKE</div>
       </div>
-      <div class="collaborator">
-        <span class="users-title">작업자.</span>
         <div class="users">
-          <vs-chip v-for="user in getUsers(project)" :key="`${project.id}-${user.user_id}`">
-            <vs-avatar :text="user.initial"/>
-            {{user.name}}
-          </vs-chip>
+          <vs-tooltip v-for="user in getUsers(project)" :key="`${project.id}-${user.id}`" :text="user.name">
+            <vs-avatar size="small" :text="user.initial"/>
+          </vs-tooltip>
           <vs-chip v-if="project.permissions_aggregate.aggregate.count > 4">
             <vs-avatar text="+"/>
             +{{project.permissions_aggregate.aggregate.count - 3}}명
           </vs-chip>
+          <div style="flex-basis: auto"/>
+          <vs-tooltip text="참여자 관리" class="participants">
+            <vs-button @click.stop="participantsManage" size="small" color="danger" type="gradient" icon="person"></vs-button>
+          </vs-tooltip>
         </div>
-      </div>
       <div class="bottom">
         <video autoplay loop muted v-if="project.videos.length > 0" class="thumbnail" :src="`https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${project.videos[0].key.replaceAll(' ', '+')}`" />
         <div class="thumbnail-no-video" v-else>No video</div>
@@ -29,16 +61,30 @@
           <div>프로젝트명.</div>
           <div v-line-clamp="2" class="name-field">{{project.name}}</div>
         </div>
+        <vs-button  @click="clickCard(project)" class="edit-button" size="small" color="primary" type="gradient" icon="edit"></vs-button>
       </div>
     </div>
   </div>
 </template>
 <style>
+.edit-button{
+  margin-left: auto;
+}
+.con-exemple-prompt{
+  text-align: left;
+}
+.permissions{
+  display: flex;
+  flex-direction: row;
+}
+.participants{
+  margin-left: auto;
+}
 .name-field{
   max-width: 190px
 }
 .name{
-  margin-top: 15px;
+  margin-top: 0px;
   margin-left: 10px;
   display:flex;
   flex-direction: column;
@@ -53,7 +99,7 @@
   align-items: center;
 }
 .thumbnail-no-video{
-  margin-top: 10px;
+  margin-top: 0px;
   width: 70px;
   height: 70px;
   background-color: grey;
@@ -142,19 +188,147 @@
 }
 </style>
 <script>
+import { Auth } from 'aws-amplify'; // eslint-disable-line no-unused-vars
+import gql from 'graphql-tag'
 export default {
   props:{
     project: Object
+  },
+  data() {
+    return {
+      user: {
+        email: null
+      },
+      activePrompt: false,
+      users: [],
+      completion: [],
+      selfId: null,
+      permission: 'participants'
+    }
   },
   methods: {
     clickCard(project){
       this.$router.push(`/drag/${project.id}`)
     },
+    async addUser(){
+      console.log(this.user, this.permission)
+      await this.$apollo.mutate({
+        variables: {
+          projectId: this.project.id,
+          userId: this.user.id,
+          permission: this.permission
+        },
+        mutation: gql`mutation($projectId: Int!, $userId: String!, $permission: String!){
+          insert_permission_one(object: {project_id: $projectId, user_id: $userId, role: $permission}){
+            user_id
+          }
+        }`
+      })
+      const { data: { permission } } = await this.$apollo.query({
+        variables: {
+          projectId: this.project.id
+        },
+        fetchPolicy: 'network-only',
+        query: gql`query($projectId: Int!){
+          permission(where: {project_id: {_eq: $projectId}}, order_by: {user_id: asc}){
+            role
+            user{
+              id
+              name
+              email
+            }
+          }
+        }`
+      })
+      this.users = permission
+    },
+    handleClose(){
+      this.activePrompt = false
+    },
+    handleSelect(result) {
+      this.user = result
+      console.log(this.user)
+    },
+    async participantsManage(){
+      const { attributes : { sub } } = await Auth.currentAuthenticatedUser()
+      this.selfId = sub
+      this.activePrompt = true
+      const { data: { permission } } = await this.$apollo.query({
+        variables: {
+          projectId: this.project.id
+        },
+        fetchPolicy: 'network-only',
+        query: gql`query($projectId: Int!){
+          permission(where: {project_id: {_eq: $projectId}}, order_by: {user_id: asc}){
+            role
+            user{
+              id
+              name
+              email
+            }
+          }
+        }`
+      })
+      this.users = permission
+    },
+    async remove(input){
+      const { attributes : { sub } } = await Auth.currentAuthenticatedUser()
+      if (input.user.id !== sub){
+        await this.$apollo.mutate({
+          variables: {
+            projectId: this.project.id,
+            userId: input.user.id
+          },
+          mutation: gql`mutation($projectId: Int!, $userId: String!){
+            delete_permission_by_pk(project_id: $projectId, user_id: $userId){
+              user_id
+              project_id
+            }
+          }`
+        })
+        const { data: { permission } } = await this.$apollo.query({
+          variables: {
+            projectId: this.project.id
+          },
+          fetchPolicy: 'network-only',
+          query: gql`query($projectId: Int!){
+            permission(where: {project_id: {_eq: $projectId}}, order_by: {user_id: asc}){
+              role
+              user{
+                id
+                name
+                email
+              }
+            }
+          }`
+        })
+        this.users = permission
+      }
+    },
+    async search(queryString, callback){
+      const ids = this.project.permissions.map((permission) => permission.user.id)
+      const { data: { user } } = await this.$apollo.query({
+        variables: {
+          ids,
+          email: `%${queryString}%`
+        },
+        fetchPolicy: 'network-only',
+        query: gql`query ($ids: [String!]!, $email: String){
+          user(where: {id: {_nin: $ids}, email: {_ilike: $email}}, limit: 3, order_by: {email: asc}){
+            id
+            name
+            email
+          }
+        }`
+      })
+      callback(user.map((user) => ({...user, value: user.email})))
+    },
     getUsers(element) {
       return element.permissions.map((permission) => {
         const name = (permission?.user?.name || permission.user.email.split('@')[0])
         return {
-          name: name.length > 3 ? `${name.substring(0, 3)}...` : name,
+          name: name,
+          id: permission.user.id,
           initial: permission?.user?.name?.replace(/\s+/, ' ')?.split(' ')?.map((text) => text?.charAt(0)?.toUpperCase())?.slice(0, 2).join('') || permission?.user?.email?.charAt(0)?.toUpperCase()
         }
       })
