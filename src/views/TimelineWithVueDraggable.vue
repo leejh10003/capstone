@@ -245,11 +245,6 @@ export default {
           }
         }
       })
-      /*playing.forEach((clip) => {
-        this.$refs[`trackVideoPlayer${clip.track_id}`][0].src = `https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${clip.src.replaceAll(' ', '+')}`
-        this.$refs[`trackVideoPlayer${clip.track_id}`][0].currentTime = this.current / 24 - clip.video_offset
-        this.effects[`effect${clip.track_id}`] = clip.effect
-      })*/
     },
     selectClip(clip) {
       this.selectedClip = _.cloneDeep(clip)
@@ -638,7 +633,6 @@ export default {
         const id = (allClips.reduce((prev, next) => prev ? Math.max(prev, next.id) : next.id, 0) ?? -1) + 1
         const trackPixelInfo = this.$refs[`track${toward}`][0].getClientRects()
         const toTrack = this.projects[0].tracks.filter((track) => track.id === toward)[0]
-        //ADDED
         const mappedTrackClip = toTrack.clips.map((clip) => ({
           id: clip.id,
           start_time: clip.track_offset_time,
