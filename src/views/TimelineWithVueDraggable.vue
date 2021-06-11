@@ -28,7 +28,12 @@
           <vs-chip v-else closable @click="remove(permission)">
             {{permission.user.email}} {{permission.role}}
           </vs-chip>
-        </span>
+        </span><br/><br/>
+        프로젝트의 길이를 정해 주세요<br/>
+        <div style="display: flex">
+          <vs-input class="inputx" placeholder="Placeholder" v-model="videoLength"/> 초 
+          <vs-button style="display: flex" @click.stop="editSeconds" size="small" color="primary" type="gradient" icon="edit"></vs-button>
+        </div>
       </div>
     </el-dialog>
     <vs-navbar type="gradient" id="navbar" color="white" class="nabarx">
@@ -38,7 +43,7 @@
         </vs-navbar-title>
       </template>
       <vs-navbar-item index="0">
-        <vs-button @click="participantsManage" type="gradient">협업자 수정</vs-button>
+        <vs-button @click="participantsManage" type="gradient">프로젝트 설정</vs-button>
       </vs-navbar-item>
       <vs-navbar-item index="1">
         <router-link to="/projects">프로젝트 목록</router-link>
@@ -100,7 +105,7 @@
             v-for="track in projects[0].tracks"
             :key="`track${track.id}`"
             :ref="`track${track.id}`"
-            :style="{ position: 'relative', width: `${projects[0].length * 24}px` }"
+            :style="{ overflow: 'hidden', position: 'relative', width: `${projects[0].length * 24}px` }"
             @dragenter.prevent
             @dragover.prevent
             @drop="onDrop($event, track.id)"
@@ -240,6 +245,7 @@ export default {
       kernel: Function('a', 'return a'),
       disposed: false,
       pauseGPU: false,
+      videoLength: '',
       lastCalledTime: Date.now(),
       flipXY: false,
       alterColors: false,
@@ -260,12 +266,16 @@ export default {
       const { attributes : { sub } } = await Auth.currentAuthenticatedUser()
       this.selfId = sub
       this.activePrompt = true
-      const { data: { permission } } = await this.$apollo.query({
+      const { data: { permission, projects } } = await this.$apollo.query({
         variables: {
-          projectId: this.$route.params.id
+          projectId: this.$route.params.id,
+          projectIdBig: this.$route.params.id
         },
         fetchPolicy: 'network-only',
-        query: gql`query($projectId: Int!){
+        query: gql`query($projectId: Int!, $projectIdBig: bigint!){
+          projects(where: {id: {_eq: $projectIdBig}}){
+            length
+          }
           permission(where: {project_id: {_eq: $projectId}}, order_by: {user_id: asc}){
             role
             user{
@@ -277,6 +287,21 @@ export default {
         }`
       })
       this.users = permission
+      this.videoLength = `${projects[0].length}`
+    },
+    async editSeconds(){
+      await this.$apollo.mutate({
+        variables: {
+          projectId: this.$route.params.id,
+          seconds: parseFloat(this.videoLength),
+        },
+        mutation: gql`mutation($projectId: bigint!, $seconds: float8!){
+          update_projects_by_pk(pk_columns: {id: $projectId}, _set: {length: $seconds}){
+            id
+          }
+        }`
+      });
+      this.activePrompt = false
     },
     async addUser(){
       console.log(this.user, this.permission)
