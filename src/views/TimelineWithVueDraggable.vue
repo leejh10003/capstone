@@ -1,5 +1,36 @@
 <template>
   <div style="background-color: #efefef;">
+    <el-dialog
+      :visible.sync="activePrompt"
+      width="30%"
+      :before-close="handleClose">
+      <div @click.stop class="con-exemple-prompt">
+        추가할 팀원의 이메일 이름을 적어주세요<br/>
+        <el-autocomplete
+          autocomplete
+          :fetch-suggestions="search"
+          @select="handleSelect"
+          class="selectExample"
+          label="이메일"
+          v-model="user.email"
+          value-key="value"
+          />
+        <div class="permissions">
+          <vs-radio v-model="permission" vs-name="permission" vs-value="admin">admin</vs-radio>
+          <vs-radio v-model="permission" vs-name="permission" vs-value="participants">participants</vs-radio>
+          <vs-button @click.stop="addUser" size="small" color="danger" type="gradient" icon="person_add"></vs-button>
+        </div>
+        <div style="height: 10px"/>
+        <span v-for="permission in users" :key="permission.user.id">
+          <vs-chip v-if="permission.user.id === selfId">
+            {{permission.user.email}} {{permission.role}}
+          </vs-chip>
+          <vs-chip v-else closable @click="remove(permission)">
+            {{permission.user.email}} {{permission.role}}
+          </vs-chip>
+        </span>
+      </div>
+    </el-dialog>
     <vs-navbar type="gradient" id="navbar" color="white" class="nabarx">
       <template #title>
         <vs-navbar-title>
@@ -7,6 +38,9 @@
         </vs-navbar-title>
       </template>
       <vs-navbar-item index="0">
+        <vs-button @click="participantsManage" type="gradient">협업자 수정</vs-button>
+      </vs-navbar-item>
+      <vs-navbar-item index="1">
         <router-link to="/projects">프로젝트 목록</router-link>
       </vs-navbar-item>
     </vs-navbar>
@@ -192,6 +226,12 @@ export default {
   },
   data: function(){
     return {
+      users: [],
+      user: {
+        email: null
+      },
+      permission: 'participants',
+      activePrompt: false,
       slider: 0,
       selectedClip: null,
       uploadStatus: null,
@@ -216,6 +256,85 @@ export default {
     }
   },
   methods: {
+    async participantsManage(){
+      const { attributes : { sub } } = await Auth.currentAuthenticatedUser()
+      this.selfId = sub
+      this.activePrompt = true
+      const { data: { permission } } = await this.$apollo.query({
+        variables: {
+          projectId: this.$route.params.id
+        },
+        fetchPolicy: 'network-only',
+        query: gql`query($projectId: Int!){
+          permission(where: {project_id: {_eq: $projectId}}, order_by: {user_id: asc}){
+            role
+            user{
+              id
+              name
+              email
+            }
+          }
+        }`
+      })
+      this.users = permission
+    },
+    async addUser(){
+      console.log(this.user, this.permission)
+      await this.$apollo.mutate({
+        variables: {
+          projectId: this.project.id,
+          userId: this.user.id,
+          permission: this.permission
+        },
+        mutation: gql`mutation($projectId: Int!, $userId: String!, $permission: String!){
+          insert_permission_one(object: {project_id: $projectId, user_id: $userId, role: $permission}){
+            user_id
+          }
+        }`
+      })
+      const { data: { permission } } = await this.$apollo.query({
+        variables: {
+          projectId: this.project.id
+        },
+        fetchPolicy: 'network-only',
+        query: gql`query($projectId: Int!){
+          permission(where: {project_id: {_eq: $projectId}}, order_by: {user_id: asc}){
+            role
+            user{
+              id
+              name
+              email
+            }
+          }
+        }`
+      })
+      this.users = permission
+    },
+    async search(queryString, callback){
+      const ids = this.project.permissions.map((permission) => permission.user.id)
+      const { data: { user } } = await this.$apollo.query({
+        variables: {
+          ids,
+          email: `%${queryString}%`
+        },
+        fetchPolicy: 'network-only',
+        query: gql`query ($ids: [String!]!, $email: String){
+          user(where: {id: {_nin: $ids}, email: {_ilike: $email}}, limit: 3, order_by: {email: asc}){
+            id
+            name
+            email
+          }
+        }`
+      })
+      callback(user.map((user) => ({...user, value: user.email})))
+    },
+    handleSelect(result) {
+      this.user = result
+      console.log(this.user)
+    },
+    handleClose(){
+      this.activePrompt = false
+    },
     async opacityChange(event, clip){
       console.log(event, clip)
       const tracks = this.projects[0].tracks.map((track) => track.clips.map((clip) => ({
@@ -767,6 +886,9 @@ export default {
   background-color: white;
   -webkit-box-shadow: 0 4px 25px 0 rgb(0 0 0 / 10%);
   box-shadow: 0 4px 25px 0 rgb(0 0 0 / 10%);
+}
+.con-exemple-prompt{
+  padding-bottom: 30px;
 }
 .clip{
   background-color: white;

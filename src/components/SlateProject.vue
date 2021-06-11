@@ -17,7 +17,7 @@
       width="30%"
       :before-close="handleClose">
       <div @click.stop class="con-exemple-prompt">
-        추가할 팀원의 이메일 이름을 적어주세요
+        추가할 팀원의 이메일 이름을 적어주세요<br/>
         <el-autocomplete
           autocomplete
           :fetch-suggestions="search"
@@ -78,6 +78,9 @@
   </div>
 </template>
 <style>
+.con-exemple-prompt{
+  padding-bottom: 30px;
+}
 .edit-button{
   margin-left: auto;
 }
