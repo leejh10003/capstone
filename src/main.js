@@ -11,10 +11,12 @@ Vue.use(VideoEditingTimeline);
 import 'material-icons/iconfont/material-icons.css'
 import 'vuesax/dist/vuesax.css' 
 import Vuesax from 'vuesax'
+import lineClamp from 'vue-line-clamp'
 
 Vue.config.productionTip = false
 Vue.component('vue-draggable-resizable', VueDraggableResizable)
 Vue.use(Vuesax)
+Vue.use(lineClamp, {})
 
 new Vue({
   router,

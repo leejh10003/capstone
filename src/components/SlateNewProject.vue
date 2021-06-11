@@ -2,23 +2,13 @@
   <div class="slate-card" @click="openPrompt">
     <vs-prompt
     @cancel="val=''"
-    @accept="acceptAlert"
-    @close="close"
     accept-text="생성"
     title="새 프로젝트 생성"
     cancel-text="취소"
     :active.sync="activePrompt">
       <div class="con-exemple-prompt">
-        Enter the security code
+        프로젝트 이름
         <vs-input placeholder="Code" v-model="val"/>
-
-        <vs-select
-          class="selectExample"
-          label="Figuras"
-          v-model="select1"
-          >
-          <vs-select-item :key="index" :value="item.value" :text="item.text" v-for="item,index in options1" />
-        </vs-select>
       </div>
     </vs-prompt>
     <div class="upper-stripe" />

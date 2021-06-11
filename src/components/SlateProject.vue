@@ -22,12 +22,31 @@
           </vs-chip>
         </div>
       </div>
-      <video autoplay loop muted v-if="project.videos.length > 0" class="thumbnail" :src="`https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${project.videos[0].key.replaceAll(' ', '+')}`" />
-      <div class="thumbnail-no-video" v-else>No video</div>
+      <div class="bottom">
+        <video autoplay loop muted v-if="project.videos.length > 0" class="thumbnail" :src="`https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${project.videos[0].key.replaceAll(' ', '+')}`" />
+        <div class="thumbnail-no-video" v-else>No video</div>
+        <div class="name">
+          <div>프로젝트명.</div>
+          <div v-line-clamp="2" class="name-field">{{project.name}}</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 <style>
+.name-field{
+  max-width: 190px
+}
+.name{
+  margin-top: 15px;
+  margin-left: 10px;
+  display:flex;
+  flex-direction: column;
+}
+.bottom{
+  display: flex;
+  flex-direction: row;
+}
 .users{
   display: flex;
   flex-direction: row;
