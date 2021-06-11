@@ -42,7 +42,6 @@ export default {
           }
          }`
        })
-       console.log(id)
        this.$router.push(`/project/${id}`)
      }
   },

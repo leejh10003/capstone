@@ -244,7 +244,6 @@ export default {
       this.naming = false
     },
     async addUser(){
-      console.log(this.user, this.permission)
       await this.$apollo.mutate({
         variables: {
           projectId: this.project.id,
@@ -283,7 +282,6 @@ export default {
     },
     handleSelect(result) {
       this.user = result
-      console.log(this.user)
     },
     async participantsManage(){
       const { attributes : { sub } } = await Auth.currentAuthenticatedUser()

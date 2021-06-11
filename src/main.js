@@ -4,7 +4,7 @@ Amplify.configure(awsconfig);
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
-import { createProvider } from './vue-apollo'
+import { apolloProvider } from './vue-apollo'
 import VueDraggableResizable from 'vue-draggable-resizable'
 import VideoEditingTimeline from 'video-editing-timeline-vue'
 Vue.use(VideoEditingTimeline);
@@ -24,6 +24,6 @@ Vue.use(lineClamp, {})
 
 new Vue({
   router,
-  apolloProvider: createProvider(),
+  apolloProvider,
   render: h => h(App)
 }).$mount('#app')

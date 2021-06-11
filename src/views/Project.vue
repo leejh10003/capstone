@@ -309,7 +309,6 @@ export default {
       this.activePrompt = false
     },
     async addUser(){
-      console.log(this.user, this.permission)
       await this.$apollo.mutate({
         variables: {
           projectId: this.project.id,
@@ -360,13 +359,11 @@ export default {
     },
     handleSelect(result) {
       this.user = result
-      console.log(this.user)
     },
     handleClose(){
       this.activePrompt = false
     },
     async opacityChange(event, clip){
-      console.log(event, clip)
       const tracks = this.projects[0].tracks.map((track) => track.clips.map((clip) => ({
         video_offset: clip.video_offset_time,
         track_id: track.id,
@@ -811,7 +808,6 @@ export default {
             id,
             track_offset_time: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24
           })
-          console.log(toTrack.clips)
           await this.$apollo.mutate({
             variables: {
               ids,
