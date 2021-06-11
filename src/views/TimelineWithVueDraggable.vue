@@ -105,7 +105,7 @@
             v-for="track in projects[0].tracks"
             :key="`track${track.id}`"
             :ref="`track${track.id}`"
-            :style="{ overflow: 'hidden', position: 'relative', width: `${projects[0].length * 24}px` }"
+            :style="{ overflow: 'hidden', position: 'relative', width: `${projects[0].length * 24}px`, left: '0px' }"
             @dragenter.prevent
             @dragover.prevent
             @drop="onDrop($event, track.id)"
@@ -894,7 +894,7 @@ export default {
   margin: 10px
 }
 .drop-zone{
-  margin: 10px auto;
+  margin: 10px 0px;
   background-color: #ecf0f1;
   display: flex;
   height: 48px;
