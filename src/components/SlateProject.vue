@@ -1,7 +1,18 @@
 <template>
   <div class="slate-card">
     <el-dialog
-      @click.
+      :visible.sync="naming"
+      width="30%"
+      :before-close="handleCloseNaming">
+      <div class="con-exemple-prompt">
+        고칠 프로젝트 이름을 적어 주세요
+      </div>
+      <el-input v-model="name"/>
+      <span slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="changeName" :loading="changing">적용</el-button>
+      </span>
+    </el-dialog>
+    <el-dialog
       :visible.sync="activePrompt"
       width="30%"
       :before-close="handleClose">
@@ -58,7 +69,7 @@
         <video autoplay loop muted v-if="project.videos.length > 0" class="thumbnail" :src="`https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${project.videos[0].key.replaceAll(' ', '+')}`" />
         <div class="thumbnail-no-video" v-else>No video</div>
         <div class="name">
-          <div>프로젝트명.</div>
+          <div>프로젝트명<span style="color: grey" @click="naming = true"> (수정)</span></div>
           <div v-line-clamp="2" class="name-field">{{project.name}}</div>
         </div>
         <vs-button  @click="clickCard(project)" class="edit-button" size="small" color="primary" type="gradient" icon="edit"></vs-button>
@@ -199,16 +210,35 @@ export default {
       user: {
         email: null
       },
+      name: '',
       activePrompt: false,
       users: [],
       completion: [],
       selfId: null,
-      permission: 'participants'
+      permission: 'participants',
+      naming: false,
+      changing: false,
     }
   },
   methods: {
     clickCard(project){
       this.$router.push(`/drag/${project.id}`)
+    },
+    async changeName(){
+      this.changing = true
+      await this.$apollo.mutate({
+        variables: {
+          projectId: this.project.id,
+          name: this.name
+        },
+        mutation: gql`mutation($projectId: bigint!, $name: String!){
+          update_projects_by_pk(pk_columns: {id: $projectId}, _set: {name: $name}){
+            id
+          }
+        }`
+      })
+      this.changing = false
+      this.naming = false
     },
     async addUser(){
       console.log(this.user, this.permission)
@@ -244,6 +274,9 @@ export default {
     },
     handleClose(){
       this.activePrompt = false
+    },
+    handleCloseNaming(){
+      this.naming = false
     },
     handleSelect(result) {
       this.user = result
