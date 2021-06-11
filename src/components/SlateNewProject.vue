@@ -32,7 +32,7 @@ export default {
       this.activePrompt = true
     },
      async createProject (){
-       const { data: { insert_projects_one: id } } = await this.$apollo.mutate({
+       const { data: { insert_projects_one: { id } } } = await this.$apollo.mutate({
          variables: {
            name: this.name
          },
@@ -42,6 +42,7 @@ export default {
           }
          }`
        })
+       console.log(id)
        this.$router.push(`/drag/${id}`)
      }
   },
