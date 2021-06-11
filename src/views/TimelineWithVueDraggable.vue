@@ -1,10 +1,25 @@
 <template>
-  <div>
-    <canvas ref='nullvideo' width="480" height="270" style="display: none"/>
+  <div style="background-color: #efefef;">
+    <vs-navbar type="gradient" id="navbar" color="white" class="nabarx">
+      <template #title>
+        <vs-navbar-title>
+          Fluvid
+        </vs-navbar-title>
+      </template>
+      <vs-navbar-item index="0">
+        <a href="#">로그아웃</a>
+      </vs-navbar-item>
+    </vs-navbar>
     <vs-alert :title="uploadStatus === 'uploading' ? '업로드 중...' : '완료'" :active="uploadStatus !== null" :color.sync='colorUpload' style="position: absolute; bottom: 30px; right: 30px; width: 300px;z-index: 4;">
       {{ uploadStatus === 'uploading' ? '파일을 업로드하는 중입니다...' : '업로드가 완료되었습니다!' }}
     </vs-alert>
-    <div id="canvas-parent" ref="canvas-parent" class="grid-item" style="display: inline"/>
+    <div id="canvas-parent" ref="canvas-parent" class="grid-item" style="display: flex"/>
+    <div id="effect">
+      <h3 v-line-clamp="1" id="effect-file-name" v-if="selectedClip">{{selectedClip.video.filename}}</h3>
+      <hr color="#efefef" v-if="selectedClip"/>
+      <h4 v-line-clamp="1" id="opacity" v-if="selectedClip">불투명도</h4>
+      <el-slider id="opacity-slider" v-if="selectedClip" v-model="slider" @change="opacityChange($event, selectedClip)"/>
+    </div>
     <div v-if="projects != null" id="editor">
       <div style="position: absolute; bottom: 300px;">
         <vs-button color="primary" type="filled" :icon="playing ? 'pause' : 'play_circle_outline'" @click="play" />
@@ -63,16 +78,17 @@
               ref="playBar"
               :style="{height: '300px', width: '1px', backgroundColor: 'red', zIndex: 2, position: 'absolute', 'marginLeft': `${current}px`}"
             />
-            <video :ref="`trackVideoPlayer${track.id}`" controls width="480" height="270" style="display: none"/>
+            <video :ref="`trackVideoPlayer${track.id}`" controls width="800" height="450" style="display: none"/>
             <div
               v-for="clip in track.clips"
               :key="`clip${clip.id}`"
-              class="drag-el"
-              :style="{ position: 'absolute', left: `${clip.track_offset_time * 24}px`, width: `${(clip.played_time * 24)}px`, textAlign: 'start', padding: '0px', height: '32px' }"
+              class="clip"
+              :style="{ left: `${clip.track_offset_time * 24}px`, width: `${(clip.played_time * 24)}px`, backgroundColor: selectedClip !== null && clip.id === selectedClip.id ? '#d7d7d7' : 'white' }"
               :ref="`clip${clip.id}`"
               draggable="true"
+              @click="selectClip(clip)"
               @dragstart="startDrag($event, clip, track.id, 'fromTrack')">
-              <span style="sgyle: 2px; margin: 0px; padding: 0px; font-size: 10px;">{{ clip.id }}</span>
+              <span v-line-clamp="1" style="sgyle: 2px; margin: 0px; padding: 0px; font-size: 10px;">{{ clip.video.filename }}</span>
             </div>
           </div>
         </div>
@@ -163,7 +179,7 @@ export default {
           const code = 'var r = 0.0; var g = 0; var b = 0;\n' + mapped.reduce((prev, current) => prev + '\n' + current.code, '') + 'this.color(r, g, b,1)'
           const kernel = new Function(...args, code)
           this.kernel = this.gpu.createKernel(kernel, {
-            output: [480, 270],
+            output: [800, 450],
             graphical: true,
             precision: 'unsigned',
             tactic: 'precision'
@@ -178,6 +194,8 @@ export default {
   },
   data: function(){
     return {
+      slider: 0,
+      selectedClip: null,
       uploadStatus: null,
       gpu: new GPU({mode: 'gpu'}),
       kernels: [],
@@ -200,6 +218,43 @@ export default {
     }
   },
   methods: {
+    async opacityChange(event, clip){
+      console.log(event, clip)
+      const tracks = this.projects[0].tracks.map((track) => track.clips.map((clip) => ({
+        video_offset: clip.video_offset_time,
+        track_id: track.id,
+        id: clip.id,
+        start: clip.track_offset_time,
+        end: clip.track_offset_time + clip.played_time,
+        effect: clip.effect,
+        src: clip.video.key})))
+      const playing = tracks.map((track) => track.filter((clip) => clip.start * 24 <= this.current && clip.end * 24 >= this.current)).reduce((current, next) => current.concat(next), []).filter((candidate) => candidate.id === clip.id)
+      if (playing.length > 0){
+        this.effects[`effect${playing[0].track_id}`].opacity = event / 100
+      }
+      this.$apollo.mutate({
+        mutation: gql`mutation($clipId: bigint!, $effect: jsonb!){
+          update_clips_by_pk(pk_columns: {id: $clipId}, _set: {effect: $effect}){
+            id
+          }
+        }`,
+        variables: {
+          clipId: clip.id,
+          effect: {
+            opacity: event / 100
+          }
+        }
+      })
+      /*playing.forEach((clip) => {
+        this.$refs[`trackVideoPlayer${clip.track_id}`][0].src = `https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${clip.src.replaceAll(' ', '+')}`
+        this.$refs[`trackVideoPlayer${clip.track_id}`][0].currentTime = this.current / 24 - clip.video_offset
+        this.effects[`effect${clip.track_id}`] = clip.effect
+      })*/
+    },
+    selectClip(clip) {
+      this.selectedClip = _.cloneDeep(clip)
+      this.slider = clip.effect.opacity * 100
+    },
     split: async function(){
       const toSplit = this.projects[0].tracks.map((track, track_index) => ({
         clips: track.clips.map((clip, clip_index) => ({
@@ -383,6 +438,7 @@ export default {
         event.dataTransfer.dropEffect = 'clone'
         event.dataTransfer.evvectAllowed = 'clone'
         event.dataTransfer.setData('videoId', item.id)
+        event.dataTransfer.setData('filename', item.name)
       }
     },
     dropFile: async function(event) {
@@ -576,6 +632,7 @@ export default {
         }
       } else if (kind === 'fromVideos'){
         const videoId = parseInt(event.dataTransfer.getData('videoId'))
+        const fileName = event.dataTransfer.getData('filename')
         const duration = event.dataTransfer.getData('duration')
         const allClips = this.projects[0].tracks.reduce((prev, next) => next.clips ? prev.concat(next.clips) : prev, [])
         const id = (allClips.reduce((prev, next) => prev ? Math.max(prev, next.id) : next.id, 0) ?? -1) + 1
@@ -607,9 +664,13 @@ export default {
             played_time: duration,
             track_id: toward,
             video_id: videoId,
+            video: {
+              filename: fileName
+            },
             id,
             track_offset_time: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24
           })
+          console.log(toTrack.clips)
           await this.$apollo.mutate({
             variables: {
               ids,
@@ -639,6 +700,9 @@ export default {
             track_id: toward,
             video_id: videoId,
             id,
+            video: {
+              filename: fileName
+            },
             track_offset_time: (event.clientX -  xOffset - trackPixelInfo[0].x) / 24
           })
           await this.$apollo.mutate({
@@ -665,17 +729,51 @@ export default {
 </script>
 
 <style>
+#opacity-slider{
+  margin: 20px;
+  width: calc(100% - 40px);
+}
+#opacity{
+  text-align: left;
+  margin: 20px;
+}
+#effect-file-name{
+  text-align: left;
+  margin: 10px
+}
 .drop-zone{
   margin: 10px auto;
   background-color: #ecf0f1;
   display: flex;
-  height: 32px;
+  height: 48px;
 }
-.drag-el{
-  background-color: #3498db;
-  color: white;
+#effect{
+  position: absolute;
+  height: calc(100vh - 380px);
+  right: 0;
+  background-color: grey;
+  width: calc(100vw - 840px);
+  top: 36px;
+  margin: 20px;
+  border-radius: 16px;
+  background-color: white;
+  -webkit-box-shadow: 0 4px 25px 0 rgb(0 0 0 / 10%);
+  box-shadow: 0 4px 25px 0 rgb(0 0 0 / 10%);
+}
+.clip{
+  background-color: white;
+  color: black;
   padding: 5px;
+  margin-top: 8px;
   margin-bottom: 10px;
+  position: absolute;
+  text-align: start;
+  padding: 0px;
+  height: 32px;
+  border-radius: 8px;
+  text-overflow: ellipsis;
+  -webkit-box-shadow: 0 4px 25px 0 rgb(0 0 0 / 10%);
+  box-shadow: 0 4px 25px 0 rgb(0 0 0 / 10%);
 }
 #buttons{
   width: 100%;
@@ -687,29 +785,34 @@ export default {
   bottom: 0px;
   right: 0px;
   width: calc(100vw - 300px);
+  background-color: white;
 }
 #videos{
   position: absolute;
   bottom: 0px;
   left: 0px;
   width: 300px;
-  background-color: #000000;
+  background-color: #f5f7fb;
   height: 300px;
 }
 #editor{
-  height: calc(100vh - 270px);
+  height: calc(100vh - 488px);
   position: relative;
 }
 .video{
   width: 80px;
   margin: 10px;
   height: 80px;
-  color: white;
+  color: black;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
   padding: 5px;
-  background-color: red;
+  background-color: white;
+  border-radius: 8px;
+  display: block;
+  -webkit-box-shadow: 0 4px 25px 0 rgb(0 0 0 / 10%);
+  box-shadow: 0 4px 25px 0 rgb(0 0 0 / 10%);
 }
 .row{
   display: flex;

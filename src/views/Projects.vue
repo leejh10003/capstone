@@ -3,18 +3,11 @@
     <vs-navbar type="gradient" id="navbar" color="white" class="nabarx">
       <template #title>
         <vs-navbar-title>
-          Type
+          Fluvid
         </vs-navbar-title>
       </template>
-
       <vs-navbar-item index="0">
-        <a href="#">Home</a>
-      </vs-navbar-item>
-      <vs-navbar-item index="1">
-        <a href="#">News</a>
-      </vs-navbar-item>
-      <vs-navbar-item index="2">
-        <a href="#">Update</a>
+        <a href="#">로그아웃</a>
       </vs-navbar-item>
     </vs-navbar>
     <div v-if="projects">
