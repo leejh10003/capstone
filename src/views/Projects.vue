@@ -12,7 +12,7 @@
     </vs-navbar>
     <div v-if="projects">
       <vs-row v-for="(row, index) in splitSix(projects)" :key="`row${index}`" vs-justify="space-around">
-        <vs-col vs-type="flex" vs-justify="center" vs-align="center" vs-lg="3" vs-sm="6" vs-xs="12" v-for="project in row" :key="`project${project.id}`">
+        <vs-col vs-type="flex" vs-justify="center" vs-align="center" vs-lg="4" vs-sm="6" vs-xs="12" v-for="project in row" :key="`project${project.id}`">
           <slate-new-project v-if="project.append" :project="project" />
           <slate-project v-else :project="project" />
         </vs-col>
