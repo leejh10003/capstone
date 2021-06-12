@@ -69,7 +69,7 @@ export default {
     },
     async confirmAmplify(){
       await Auth.confirmSignUp(this.username, this.confirmationCode);
-      this.$router.pusy("/login")
+      this.$router.push("/login")
     },
     async register() {
       try {
