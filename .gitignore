@@ -4,8 +4,9 @@ node_modules
 
 
 # local env files
-.env.local
-.env.*.local
+.env
+.env.*
+!.env.example
 
 # Log files
 npm-debug.log*
@@ -33,7 +34,9 @@ amplify/backend/.temp
 build/
 dist/
 node_modules/
+# Generated Amplify frontend configuration; provision it outside Git.
 aws-exports.js
+src/aws-exports.js
 awsconfiguration.json
 amplifyconfiguration.json
 amplify-build-config.json

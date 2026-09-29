@@ -141,6 +141,7 @@ import { GPU } from 'gpu.js'
 import _ from 'lodash'
 import gql from 'graphql-tag'
 import { Storage, Auth } from 'aws-amplify' //eslint-disable-line no-unused-vars
+import { publicVideoUrl } from '../config'
 export default {
   components: {
     simplebar
@@ -527,7 +528,7 @@ export default {
         allInverting = Object.entries(allInverting).map((value) => value[1])
         allInverting.forEach((timing) => {
           if (timing.start && this.$refs[`trackVideoPlayer${timing.start.track_id}`]?.[0]){
-            this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].src = `https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${timing.start.src.replaceAll(' ', '+')}`
+            this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].src = publicVideoUrl(timing.start.src)
             this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].currentTime = timing.start.video_offset
             this.$refs[`trackVideoPlayer${timing.start.track_id}`][0].play()
             this.effects[`effect${timing.start.track_id}`] = timing.start.effect
@@ -661,7 +662,7 @@ export default {
         src: clip.video.key})))
       const playing = tracks.map((track) => track.filter((clip) => clip.start * 24 <= this.current && clip.end * 24 >= this.current)).reduce((current, next) => current.concat(next), [])
       playing.forEach((clip) => {
-        this.$refs[`trackVideoPlayer${clip.track_id}`][0].src = `https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${clip.src.replaceAll(' ', '+')}`
+        this.$refs[`trackVideoPlayer${clip.track_id}`][0].src = publicVideoUrl(clip.src)
         this.$refs[`trackVideoPlayer${clip.track_id}`][0].currentTime = this.current / 24 - clip.video_offset
         this.effects[`effect${clip.track_id}`] = clip.effect
       })

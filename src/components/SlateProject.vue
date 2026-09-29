@@ -66,7 +66,7 @@
           </vs-tooltip>
         </div>
       <div class="bottom">
-        <video autoplay loop muted v-if="project.videos.length > 0" class="thumbnail" :src="`https://editassets185420-dev.s3.ap-northeast-2.amazonaws.com/public/${project.videos[0].key.replaceAll(' ', '+')}`" />
+        <video autoplay loop muted v-if="project.videos.length > 0" class="thumbnail" :src="getPublicVideoUrl(project.videos[0].key)" />
         <div class="thumbnail-no-video" v-else>No video</div>
         <div class="name">
           <div>프로젝트명<span style="color: grey" @click="naming = true"> (수정)</span></div>
@@ -204,6 +204,7 @@
 <script>
 import { Auth } from 'aws-amplify'; // eslint-disable-line no-unused-vars
 import gql from 'graphql-tag'
+import { publicVideoUrl } from '../config'
 export default {
   props:{
     project: Object
@@ -224,6 +225,7 @@ export default {
     }
   },
   methods: {
+    getPublicVideoUrl: publicVideoUrl,
     clickCard(project){
       this.$router.push(`/project/${project.id}`)
     },

@@ -64,17 +64,19 @@ The configuration must contain the Cognito and S3 settings used by the applicati
 
 ### 3. Configure the GraphQL Endpoints
 
-Create a `.env.local` file in the project root to specify endpoints for your development environment:
+Copy `.env.example` to `.env.local` and replace the placeholders with endpoints for your development environment:
 
 ```dotenv
 VUE_APP_GRAPHQL_HTTP=https://example.com/graphql/v1/graphql
 VUE_APP_GRAPHQL_WS=wss://example.com/graphql/v1/graphql
+VUE_APP_S3_PUBLIC_URL=https://example-bucket.s3.example-region.amazonaws.com
 ```
 
 | Variable | Description | When omitted |
 | --- | --- | --- |
-| `VUE_APP_GRAPHQL_HTTP` | GraphQL HTTP endpoint for queries and mutations | Uses the default endpoint defined in the source code |
-| `VUE_APP_GRAPHQL_WS` | GraphQL WebSocket endpoint for subscriptions | Uses the default endpoint defined in the source code |
+| `VUE_APP_GRAPHQL_HTTP` | GraphQL HTTP endpoint for queries and mutations | Required; the app fails fast when it is missing |
+| `VUE_APP_GRAPHQL_WS` | GraphQL WebSocket endpoint for subscriptions | Required; the app fails fast when it is missing |
+| `VUE_APP_S3_PUBLIC_URL` | S3 bucket base URL for public video assets | Required; the app fails fast when it is missing |
 | `VUE_APP_APOLLO_ENGINE_SERVICE` | Apollo CLI service name (optional) | Not configured |
 | `VUE_APP_APOLLO_ENGINE_KEY` | Apollo CLI API key (optional) | Not configured |
 | `APOLLO_ENGINE_API_ENDPOINT` | Apollo Engine API endpoint (optional) | Not configured |
@@ -149,14 +151,14 @@ The deployment configuration in this repository assumes the following workflow:
 1. CodeBuild packages the source and deployment scripts into `frontend.zip`.
 2. CodeDeploy copies the artifact to `/home/ubuntu` on an EC2 instance.
 3. `before.sh` prepares `/home/ubuntu/deploy`.
-4. `build.sh` copies the separately provisioned `/home/ubuntu/aws-exports.js` into `src/`.
-5. It runs `yarn install` and `yarn build` with Node.js 14.7.0 to generate `dist/`.
+4. `build.sh` requires the separately provisioned `/home/ubuntu/aws-exports.js` and the `VUE_APP_GRAPHQL_HTTP`, `VUE_APP_GRAPHQL_WS`, and `VUE_APP_S3_PUBLIC_URL` environment variables.
+5. It copies `aws-exports.js` into `src/`, then runs `yarn install` and `yarn build` with Node.js 14.7.0 to generate `dist/`.
 
 These scripts assume that the expected EC2 directory structure, NVM, Yarn, and `aws-exports.js` have already been provisioned. Web server configuration for serving the generated static files is not included in this repository.
 
 ## Development Notes
 
-- The public video URL currently references a specific S3 bucket directly in `src/views/Project.vue` and `src/components/SlateProject.vue`. When using a different AWS environment, update these references or move the bucket URL into an environment variable.
+- The GraphQL endpoints and public S3 base URL are injected through `VUE_APP_*` variables at build time; no environment-specific endpoint is hardcoded in the source.
 - The GraphQL operations assume the existence of `projects`, `permission`, `user`, `videos`, `tracks`, and `clips` tables and their related queries, mutations, and subscriptions.
 - The Cognito ID token is also passed when establishing authenticated GraphQL WebSocket connections.
 - Korean translation resources exist under `src/lang/`, but i18n initialization is currently disabled in `src/main.js`.

@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueApollo from 'vue-apollo'
 import { createApolloClient, restartWebsockets } from 'vue-cli-plugin-apollo/graphql-client'
 import { Auth } from 'aws-amplify'
+import { GRAPHQL_HTTP_ENDPOINT, GRAPHQL_WS_ENDPOINT } from './config'
 
 // Install the vue plugin
 Vue.use(VueApollo)
@@ -14,10 +15,10 @@ const AUTH_TOKEN = 'apollo-token'
 // Config
 const defaultOptions = {
   // You can use `https` for secure connection (recommended in production)
-  httpEndpoint: process.env.VUE_APP_GRAPHQL_HTTP || 'https://nle-frontend.jeontuk-11.link/graphql/v1/graphql',
+  httpEndpoint: GRAPHQL_HTTP_ENDPOINT,
   // You can use `wss` for secure connection (recommended in production)
   // Use `null` to disable subscriptions
-  wsEndpoint: process.env.VUE_APP_GRAPHQL_WS || 'wss://nle-frontend.jeontuk-11.link/graphql/v1/graphql',
+  wsEndpoint: GRAPHQL_WS_ENDPOINT,
   // LocalStorage token
   // tokenName: AUTH_TOKEN,
   // Enable Automatic Query persisting with Apollo Engine
